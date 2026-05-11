@@ -55,24 +55,6 @@ export const PRESET_HABITS: Habit[] = [
     createdAt: '2024-01-01',
     isCustom: false,
   },
-  {
-    id: 'sleep',
-    name: 'Sleep Hygiene',
-    icon: '😴',
-    color: '#5B7FA6',
-    category: 'sleep',
-    createdAt: '2024-01-01',
-    isCustom: false,
-  },
-  {
-    id: 'digital-detox',
-    name: 'Digital Detox',
-    icon: '📵',
-    color: '#7D8C6A',
-    category: 'digital-detox',
-    createdAt: '2024-01-01',
-    isCustom: false,
-  },
 ];
 
 export const getHabitById = (id: string): Habit | undefined =>

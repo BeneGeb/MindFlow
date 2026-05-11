@@ -11,8 +11,6 @@ const CONTENT_MAP: Record<string, number> = {
   'habit/exercise': require('../../assets/content/habits/exercise.md'),
   'habit/yoga': require('../../assets/content/habits/yoga.md'),
   'habit/breathing': require('../../assets/content/habits/breathing.md'),
-  'habit/sleep': require('../../assets/content/habits/sleep.md'),
-  'habit/digital-detox': require('../../assets/content/habits/digital-detox.md'),
   // Library – Atomic Habits
   'library/4-laws': require('../../assets/content/library/atomic-habits/4-laws.md'),
   'library/2-minute-rule': require('../../assets/content/library/atomic-habits/2-minute-rule.md'),
@@ -48,6 +46,4 @@ export const HABIT_CONTENT_KEY: Record<string, string> = {
   exercise: 'habit/exercise',
   yoga: 'habit/yoga',
   breathing: 'habit/breathing',
-  sleep: 'habit/sleep',
-  'digital-detox': 'habit/digital-detox',
 };
