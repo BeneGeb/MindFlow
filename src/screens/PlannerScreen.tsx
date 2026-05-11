@@ -1,23 +1,20 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Modal,
-  TextInput,
-  Alert,
   Platform,
 } from 'react-native';
-import { useHabitStore } from '../store/habitStore';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePlannerStore } from '../store/plannerStore';
 import { RepeatMode, PlannedHabit } from '../types';
 import { PRESET_HABITS } from '../data/habits';
 import {
   today,
-  toDateString,
   getWeekDates,
   SHORT_DAY_NAMES,
   formatTime,
@@ -37,17 +34,48 @@ const WEEK_DAYS = [
 function AddPlanModal({
   visible,
   selectedDate,
+  editEntry,
   onClose,
 }: {
   visible: boolean;
   selectedDate: string;
+  editEntry?: PlannedHabit;
   onClose: () => void;
 }) {
   const addPlanned = usePlannerStore((s) => s.addPlanned);
+  const updatePlanned = usePlannerStore((s) => s.updatePlanned);
   const [selectedHabitId, setSelectedHabitId] = useState(PRESET_HABITS[0].id);
-  const [time, setTime] = useState('08:00');
+  const [timeDate, setTimeDate] = useState(() => new Date());
+  const [showPicker, setShowPicker] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('daily');
   const [repeatDays, setRepeatDays] = useState<number[]>([1, 2, 3, 4, 5]);
+
+  useEffect(() => {
+    if (visible) {
+      setShowPicker(false);
+      if (editEntry) {
+        setSelectedHabitId(editEntry.habitId);
+        const [h, m] = editEntry.time.split(':').map(Number);
+        const d = new Date();
+        d.setHours(h, m, 0, 0);
+        setTimeDate(d);
+        setRepeatMode(editEntry.repeatMode);
+        setRepeatDays(editEntry.repeatDays);
+      } else {
+        setSelectedHabitId(PRESET_HABITS[0].id);
+        setTimeDate(new Date());
+        setRepeatMode('daily');
+        setRepeatDays([1, 2, 3, 4, 5]);
+      }
+    }
+  }, [visible, editEntry]);
+
+  const timeString = `${String(timeDate.getHours()).padStart(2, '0')}:${String(timeDate.getMinutes()).padStart(2, '0')}`;
+
+  const handleTimeChange = (event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') setShowPicker(false);
+    if (event.type === 'set' && date) setTimeDate(date);
+  };
 
   const toggleDay = (day: number) => {
     setRepeatDays((prev) =>
@@ -56,17 +84,21 @@ function AddPlanModal({
   };
 
   const handleSave = () => {
-    if (!time.match(/^\d{2}:\d{2}$/)) {
-      Alert.alert('Invalid time', 'Please enter time as HH:MM (e.g. 08:00)');
-      return;
+    if (editEntry) {
+      updatePlanned(editEntry.id, {
+        time: timeString,
+        repeatMode,
+        repeatDays: repeatMode === 'weekly' ? repeatDays : [],
+      });
+    } else {
+      addPlanned({
+        habitId: selectedHabitId,
+        time: timeString,
+        repeatMode,
+        repeatDays: repeatMode === 'weekly' ? repeatDays : [],
+        date: null,
+      });
     }
-    addPlanned({
-      habitId: selectedHabitId,
-      time,
-      repeatMode,
-      repeatDays: repeatMode === 'weekly' ? repeatDays : [],
-      date: repeatMode === 'once' ? selectedDate : null,
-    });
     onClose();
   };
 
@@ -77,51 +109,71 @@ function AddPlanModal({
           <TouchableOpacity onPress={onClose}>
             <Text style={styles.modalCancel}>Cancel</Text>
           </TouchableOpacity>
-          <Text style={styles.modalTitle}>Plan a Habit</Text>
+          <Text style={styles.modalTitle}>{editEntry ? 'Edit Habit' : 'Plan a Habit'}</Text>
           <TouchableOpacity onPress={handleSave}>
             <Text style={styles.modalSave}>Save</Text>
           </TouchableOpacity>
         </View>
 
         <ScrollView contentContainerStyle={styles.modalContent}>
-          {/* Habit Picker */}
-          <Text style={styles.sectionLabel}>HABIT</Text>
-          <View style={styles.habitGrid}>
-            {PRESET_HABITS.map((habit) => (
-              <TouchableOpacity
-                key={habit.id}
-                style={[
-                  styles.habitChip,
-                  selectedHabitId === habit.id && {
-                    backgroundColor: habit.color + '22',
-                    borderColor: habit.color,
-                  },
-                ]}
-                onPress={() => setSelectedHabitId(habit.id)}
-              >
-                <Text style={styles.habitChipIcon}>{habit.icon}</Text>
-                <Text style={styles.habitChipName} numberOfLines={1}>
-                  {habit.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {/* Habit Picker — hidden in edit mode */}
+          {!editEntry && (
+            <>
+              <Text style={styles.sectionLabel}>HABIT</Text>
+              <View style={styles.habitGrid}>
+                {PRESET_HABITS.map((habit) => (
+                  <TouchableOpacity
+                    key={habit.id}
+                    style={[
+                      styles.habitChip,
+                      selectedHabitId === habit.id && {
+                        backgroundColor: habit.color + '22',
+                        borderColor: habit.color,
+                      },
+                    ]}
+                    onPress={() => setSelectedHabitId(habit.id)}
+                  >
+                    <Text style={styles.habitChipIcon}>{habit.icon}</Text>
+                    <Text style={styles.habitChipName} numberOfLines={1}>
+                      {habit.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
 
           {/* Time */}
           <Text style={styles.sectionLabel}>TIME</Text>
-          <TextInput
-            style={styles.timeInput}
-            value={time}
-            onChangeText={setTime}
-            placeholder="08:00"
-            keyboardType="numbers-and-punctuation"
-            maxLength={5}
-          />
+          <TouchableOpacity
+            style={styles.timeDisplay}
+            onPress={() => setShowPicker(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.timeDisplayText}>{formatTime(timeString)}</Text>
+          </TouchableOpacity>
+          {showPicker && (
+            <DateTimePicker
+              value={timeDate}
+              mode="time"
+              is24Hour={true}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleTimeChange}
+            />
+          )}
+          {Platform.OS === 'ios' && showPicker && (
+            <TouchableOpacity
+              style={styles.pickerDoneBtn}
+              onPress={() => setShowPicker(false)}
+            >
+              <Text style={styles.pickerDoneText}>Done</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Repeat Mode */}
           <Text style={styles.sectionLabel}>REPEAT</Text>
           <View style={styles.repeatRow}>
-            {(['daily', 'weekly', 'once'] as RepeatMode[]).map((mode) => (
+            {(['daily', 'weekly'] as RepeatMode[]).map((mode) => (
               <TouchableOpacity
                 key={mode}
                 style={[
@@ -166,11 +218,6 @@ function AddPlanModal({
             </View>
           )}
 
-          {repeatMode === 'once' && (
-            <Text style={styles.onceNote}>
-              Will be scheduled for: {selectedDate}
-            </Text>
-          )}
         </ScrollView>
       </SafeAreaView>
     </Modal>
@@ -179,9 +226,13 @@ function AddPlanModal({
 
 function PlannerEntry({
   entry,
+  isLast,
+  onEdit,
   onDelete,
 }: {
   entry: PlannedHabit;
+  isLast: boolean;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   const habit = PRESET_HABITS.find((h) => h.id === entry.habitId);
@@ -190,25 +241,29 @@ function PlannerEntry({
   const repeatLabel =
     entry.repeatMode === 'daily'
       ? 'Every day'
-      : entry.repeatMode === 'once'
-      ? 'Once'
-      : entry.repeatDays
-          .map((d) => SHORT_DAY_NAMES[d])
-          .join(', ');
+      : entry.repeatDays.map((d) => SHORT_DAY_NAMES[d]).join(', ');
 
   return (
-    <View style={styles.entryCard}>
-      <View style={[styles.entryIconWrap, { backgroundColor: habit.color + '22' }]}>
-        <Text style={styles.entryIcon}>{habit.icon}</Text>
+    <View style={styles.timelineRow}>
+      {/* Left: time label + dot + connector */}
+      <View style={[styles.timelineGutter, isLast && styles.timelineGutterLast]}>
+        <Text style={styles.timelineTime}>{formatTime(entry.time)}</Text>
+        <View style={styles.timelineDot} />
+        {!isLast && <View style={styles.timelineConnector} />}
       </View>
-      <View style={styles.entryInfo}>
-        <Text style={styles.entryName}>{habit.name}</Text>
-        <Text style={styles.entryMeta}>
-          {formatTime(entry.time)} · {repeatLabel}
-        </Text>
-      </View>
-      <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
-        <Text style={styles.deleteIcon}>✕</Text>
+
+      {/* Right: card */}
+      <TouchableOpacity style={styles.entryCard} onPress={onEdit} activeOpacity={0.7}>
+        <View style={[styles.entryIconWrap, { backgroundColor: habit.color + '22' }]}>
+          <Text style={styles.entryIcon}>{habit.icon}</Text>
+        </View>
+        <View style={styles.entryInfo}>
+          <Text style={styles.entryName}>{habit.name}</Text>
+          <Text style={styles.entryMeta}>{repeatLabel}</Text>
+        </View>
+        <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
+          <Text style={styles.deleteIcon}>✕</Text>
+        </TouchableOpacity>
       </TouchableOpacity>
     </View>
   );
@@ -218,8 +273,10 @@ export default function PlannerScreen() {
   const weekDates = getWeekDates(new Date());
   const [selectedDate, setSelectedDate] = useState(today());
   const [modalVisible, setModalVisible] = useState(false);
+  const [editEntry, setEditEntry] = useState<PlannedHabit | undefined>(undefined);
   const getForDate = usePlannerStore((s) => s.getForDate);
   const removePlanned = usePlannerStore((s) => s.removePlanned);
+  usePlannerStore((s) => s.planned); // subscribe so deletions trigger a re-render
 
   const entries = getForDate(selectedDate);
 
@@ -265,10 +322,12 @@ export default function PlannerScreen() {
         ) : (
           entries
             .sort((a, b) => a.time.localeCompare(b.time))
-            .map((entry) => (
+            .map((entry, index) => (
               <PlannerEntry
                 key={entry.id}
                 entry={entry}
+                isLast={index === entries.length - 1}
+                onEdit={() => { setEditEntry(entry); setModalVisible(true); }}
                 onDelete={() => removePlanned(entry.id)}
               />
             ))
@@ -278,7 +337,7 @@ export default function PlannerScreen() {
       {/* FAB */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => setModalVisible(true)}
+        onPress={() => { setEditEntry(undefined); setModalVisible(true); }}
         activeOpacity={0.85}
       >
         <Text style={styles.fabIcon}>+</Text>
@@ -287,6 +346,7 @@ export default function PlannerScreen() {
       <AddPlanModal
         visible={modalVisible}
         selectedDate={selectedDate}
+        editEntry={editEntry}
         onClose={() => setModalVisible(false)}
       />
     </SafeAreaView>
@@ -312,25 +372,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
   },
-  dayBtnActive: {
-    backgroundColor: colors.primary,
-  },
-  dayBtnLabel: {
-    ...typography.label,
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  dayBtnLabelActive: {
-    color: '#fff',
-  },
-  dayBtnDate: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  dayBtnDateActive: {
-    color: '#fff',
-  },
+  dayBtnActive: { backgroundColor: colors.primary },
+  dayBtnLabel: { ...typography.label, color: colors.textSecondary, marginBottom: 2 },
+  dayBtnLabelActive: { color: '#fff' },
+  dayBtnDate: { ...typography.body, fontWeight: '600', color: colors.textPrimary },
+  dayBtnDateActive: { color: '#fff' },
   todayDot: {
     width: 4,
     height: 4,
@@ -338,21 +384,49 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     marginTop: 2,
   },
-  todayDotActive: {
-    backgroundColor: '#fff',
-  },
+  todayDotActive: { backgroundColor: '#fff' },
   scroll: { flex: 1 },
-  content: {
-    padding: spacing.md,
-    paddingBottom: 100,
+  content: { padding: spacing.md, paddingBottom: 100 },
+  timelineRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.sm,
+  },
+  timelineGutter: {
+    width: 54,
+    alignItems: 'center',
+  },
+  timelineGutterLast: {
+    alignSelf: 'flex-start',
+  },
+  timelineTime: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 4,
+    letterSpacing: 0.2,
+  },
+  timelineDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
+    marginBottom: 4,
+  },
+  timelineConnector: {
+    flex: 1,
+    width: 2,
+    borderRadius: 1,
+    backgroundColor: colors.primary,
+    opacity: 0.25,
+    minHeight: 16,
   },
   entryCard: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.md,
-    marginBottom: spacing.sm,
     ...shadow.sm,
   },
   entryIconWrap: {
@@ -367,20 +441,9 @@ const styles = StyleSheet.create({
   entryInfo: { flex: 1 },
   entryName: { ...typography.body, fontWeight: '600', marginBottom: 2 },
   entryMeta: { ...typography.bodySmall, color: colors.textSecondary },
-  deleteBtn: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteIcon: {
-    fontSize: 16,
-    color: colors.textMuted,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingVertical: spacing.xxl,
-  },
+  deleteBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  deleteIcon: { fontSize: 16, color: colors.textMuted },
+  empty: { alignItems: 'center', paddingVertical: spacing.xxl },
   emptyIcon: { fontSize: 40, marginBottom: spacing.md },
   emptyTitle: { ...typography.h3, marginBottom: spacing.sm },
   emptyText: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
@@ -396,16 +459,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadow.md,
   },
-  fabIcon: {
-    fontSize: 28,
-    color: '#fff',
-    lineHeight: 32,
-  },
-  // Modal styles
-  modalSafe: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
+  fabIcon: { fontSize: 28, color: '#fff', lineHeight: 32 },
+  // Modal
+  modalSafe: { flex: 1, backgroundColor: colors.background },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -419,21 +475,14 @@ const styles = StyleSheet.create({
   modalTitle: { ...typography.h3 },
   modalCancel: { ...typography.body, color: colors.textSecondary },
   modalSave: { ...typography.body, color: colors.primary, fontWeight: '700' },
-  modalContent: {
-    padding: spacing.md,
-    paddingBottom: spacing.xxl,
-  },
+  modalContent: { padding: spacing.md, paddingBottom: spacing.xxl },
   sectionLabel: {
     ...typography.label,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
     letterSpacing: 0.8,
   },
-  habitGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
+  habitGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   habitChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -447,20 +496,30 @@ const styles = StyleSheet.create({
   },
   habitChipIcon: { fontSize: 16 },
   habitChipName: { ...typography.bodySmall, maxWidth: 80 },
-  timeInput: {
+  timeDisplay: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
+    alignItems: 'center',
+  },
+  timeDisplayText: {
     ...typography.h2,
-    textAlign: 'center',
-    letterSpacing: 4,
+    letterSpacing: 2,
+    color: colors.textPrimary,
   },
-  repeatRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  pickerDoneBtn: {
+    alignItems: 'flex-end',
+    paddingVertical: spacing.sm,
   },
+  pickerDoneText: {
+    ...typography.body,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  // Repeat
+  repeatRow: { flexDirection: 'row', gap: spacing.sm },
   repeatChip: {
     flex: 1,
     paddingVertical: spacing.sm,
@@ -469,18 +528,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignItems: 'center',
   },
-  repeatChipActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
-  },
+  repeatChipActive: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   repeatChipText: { ...typography.bodySmall, color: colors.textSecondary },
   repeatChipTextActive: { color: colors.primary, fontWeight: '600' },
-  dayRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-    flexWrap: 'wrap',
-  },
+  dayRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm, flexWrap: 'wrap' },
   dayChip: {
     width: 40,
     height: 40,
@@ -490,16 +541,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayChipActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary,
-  },
+  dayChipActive: { borderColor: colors.primary, backgroundColor: colors.primary },
   dayChipText: { ...typography.label, color: colors.textSecondary },
   dayChipTextActive: { color: '#fff' },
-  onceNote: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
 });

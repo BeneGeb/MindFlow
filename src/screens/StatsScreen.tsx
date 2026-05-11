@@ -4,8 +4,8 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useActiveHabits } from '../store/habitStore';
 import { useStreak } from '../hooks/useStreak';
 import { useCompletionRate, useOverallCompletionRate, useHeatmapData } from '../hooks/useCompletionRate';

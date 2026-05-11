@@ -5,9 +5,9 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Markdown from 'react-native-markdown-display';
@@ -94,14 +94,6 @@ export default function HabitDetailScreen() {
           <Text style={[styles.completeBtnText, done && styles.completeBtnTextDone]}>
             {done ? '✓ Done today' : 'Mark as done today'}
           </Text>
-        </TouchableOpacity>
-
-        {/* Go to Planner */}
-        <TouchableOpacity
-          style={styles.planBtn}
-          onPress={() => navigation.navigate('MainTabs' as any)}
-        >
-          <Text style={styles.planBtnText}>📅 Plan this habit</Text>
         </TouchableOpacity>
 
         {/* Markdown Content */}
@@ -196,20 +188,7 @@ const styles = StyleSheet.create({
   completeBtnTextDone: {
     color: '#fff',
   },
-  planBtn: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  planBtnText: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
+
 });
 
 const markdownStyles = {
