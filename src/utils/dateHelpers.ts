@@ -25,9 +25,7 @@ export const getGreeting = (): string => {
 
 export const formatTime = (time: string): string => {
   const [h, m] = time.split(':').map(Number);
-  const period = h >= 12 ? 'PM' : 'AM';
-  const hour = h % 12 || 12;
-  return `${hour}:${m.toString().padStart(2, '0')} ${period}`;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 };
 
 export const getWeekDates = (referenceDate: Date): string[] => {
