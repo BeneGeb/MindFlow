@@ -1,11 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { colors, spacing, radius, typography } from '../utils/theme';
 
 interface Props {
@@ -14,19 +8,22 @@ interface Props {
 }
 
 export default function ProgressBar({ completed, total }: Props) {
-  const progress = useSharedValue(0);
+  const progress = useRef(new Animated.Value(0)).current;
   const ratio = total > 0 ? completed / total : 0;
 
   useEffect(() => {
-    progress.value = withTiming(ratio, {
+    Animated.timing(progress, {
+      toValue: ratio,
       duration: 600,
       easing: Easing.out(Easing.cubic),
-    });
+      useNativeDriver: false,
+    }).start();
   }, [ratio]);
 
-  const fillStyle = useAnimatedStyle(() => ({
-    width: `${progress.value * 100}%`,
-  }));
+  const width = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
 
   return (
     <View style={styles.container}>
@@ -34,7 +31,7 @@ export default function ProgressBar({ completed, total }: Props) {
         {completed} of {total} habits done today
       </Text>
       <View style={styles.track}>
-        <Animated.View style={[styles.fill, fillStyle]} />
+        <Animated.View style={[styles.fill, { width }]} />
       </View>
     </View>
   );

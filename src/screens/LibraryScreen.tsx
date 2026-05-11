@@ -8,14 +8,14 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { LIBRARY_ARTICLES } from '../data/library';
 import { PRESET_HABITS } from '../data/habits';
 import { LibraryArticle } from '../types';
 import { colors, spacing, radius, typography, shadow } from '../utils/theme';
 
-type Nav = StackNavigationProp<RootStackParamList>;
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 function ArticleCard({
   article,

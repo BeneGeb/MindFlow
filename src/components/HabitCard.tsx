@@ -1,11 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withSequence,
-} from 'react-native-reanimated';
+import React, { useCallback, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Habit, PlannedHabit } from '../types';
 import { colors, spacing, radius, shadow, typography } from '../utils/theme';
@@ -31,37 +25,27 @@ function StreakBadge({ habitId }: { habitId: string }) {
 }
 
 export default function HabitCard({ habit, planned, completed, onToggle, onPress }: Props) {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const scale = useRef(new Animated.Value(1)).current;
 
   const handleToggle = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    scale.value = withSequence(
-      withSpring(0.95, { duration: 80 }),
-      withSpring(1, { duration: 150 }),
-    );
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 0.95, duration: 80, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
+    ]).start();
     onToggle();
-  }, [onToggle]);
+  }, [onToggle, scale]);
 
   return (
-    <Animated.View style={[styles.card, animatedStyle, completed && styles.cardCompleted]}>
-      <TouchableOpacity
-        style={styles.inner}
-        onPress={onPress}
-        activeOpacity={0.7}
-      >
+    <Animated.View style={[styles.card, { transform: [{ scale }] }, completed && styles.cardCompleted]}>
+      <TouchableOpacity style={styles.inner} onPress={onPress} activeOpacity={0.7}>
         <View style={[styles.iconContainer, { backgroundColor: habit.color + '22' }]}>
           <Text style={styles.icon}>{habit.icon}</Text>
         </View>
         <View style={styles.content}>
           <Text style={[styles.name, completed && styles.nameCompleted]}>{habit.name}</Text>
           <View style={styles.meta}>
-            {planned && (
-              <Text style={styles.time}>{formatTime(planned.time)}</Text>
-            )}
+            {planned && <Text style={styles.time}>{formatTime(planned.time)}</Text>}
             <StreakBadge habitId={habit.id} />
           </View>
         </View>
@@ -104,12 +88,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  icon: {
-    fontSize: 22,
-  },
-  content: {
-    flex: 1,
-  },
+  icon: { fontSize: 22 },
+  content: { flex: 1 },
   name: {
     ...typography.body,
     fontWeight: '600',

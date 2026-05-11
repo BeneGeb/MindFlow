@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Markdown from 'react-native-markdown-display';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useHabitStore } from '../store/habitStore';
@@ -21,7 +21,7 @@ import { today } from '../utils/dateHelpers';
 import { colors, spacing, radius, typography, shadow } from '../utils/theme';
 import HeatmapGrid from '../components/HeatmapGrid';
 
-type Nav = StackNavigationProp<RootStackParamList>;
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'HabitDetail'>;
 
 export default function HabitDetailScreen() {

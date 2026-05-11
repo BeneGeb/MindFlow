@@ -7,7 +7,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useTodayHabits } from '../hooks/useTodayHabits';
 import { useTrackingStore } from '../store/trackingStore';
@@ -16,7 +16,7 @@ import { colors, spacing, typography } from '../utils/theme';
 import HabitCard from '../components/HabitCard';
 import ProgressBar from '../components/ProgressBar';
 
-type Nav = StackNavigationProp<RootStackParamList>;
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<Nav>();

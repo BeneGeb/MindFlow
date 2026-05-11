@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Text, StyleSheet } from 'react-native';
 import { colors, radius } from '../utils/theme';
 
@@ -25,7 +25,7 @@ export type MainTabParamList = {
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const TAB_ICONS: Record<string, string> = {
   Home: '🏠',
@@ -62,16 +62,8 @@ export default function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={MainTabs} />
-      <Stack.Screen
-        name="HabitDetail"
-        component={HabitDetailScreen}
-        options={{ presentation: 'card' }}
-      />
-      <Stack.Screen
-        name="LibraryArticle"
-        component={LibraryArticleScreen}
-        options={{ presentation: 'card' }}
-      />
+      <Stack.Screen name="HabitDetail" component={HabitDetailScreen} />
+      <Stack.Screen name="LibraryArticle" component={LibraryArticleScreen} />
     </Stack.Navigator>
   );
 }
