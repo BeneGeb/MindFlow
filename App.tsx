@@ -1,0 +1,35 @@
+import React, { useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StyleSheet } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import AppNavigator from './src/navigation/AppNavigator';
+import { useHabitStore } from './src/store/habitStore';
+import { useTrackingStore } from './src/store/trackingStore';
+import { usePlannerStore } from './src/store/plannerStore';
+import { colors } from './src/utils/theme';
+
+export default function App() {
+  const hydrateHabits = useHabitStore((s) => s.hydrate);
+  const hydrateTracking = useTrackingStore((s) => s.hydrate);
+  const hydratePlanner = usePlannerStore((s) => s.hydrate);
+
+  useEffect(() => {
+    hydrateHabits();
+    hydrateTracking();
+    hydratePlanner();
+  }, []);
+
+  return (
+    <GestureHandlerRootView style={styles.root}>
+      <NavigationContainer>
+        <StatusBar style="dark" backgroundColor={colors.background} />
+        <AppNavigator />
+      </NavigationContainer>
+    </GestureHandlerRootView>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});
