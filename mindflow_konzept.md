@@ -27,7 +27,7 @@ Die App begleitet Nutzer dabei, positive Routinen aufzubauen, bietet fundiertes 
 - Täglich abhaken erledigter Gewohnheiten
 - Streak-Anzeige (wie viele Tage in Folge)
 - Wochenübersicht als visuelle Fortschritts-Heatmap
-- Eigene Habits hinzufügen
+- Eigene Habits hinzufügen *(geplant für v2.0)*
 
 ### Vorgefertigte Habits
 | Icon | Habit | Nutzen |
@@ -78,7 +78,7 @@ Jede Habit enthält eine eigene Informationsseite mit:
 - **Farbschema:** Ruhige, warme Töne – Lila (`#7F77DD`), Grün (`#1D9E75`), Creme/Weiß
 - **Stil:** Flaches, modernes Design – keine überladenen Elemente
 - **Typografie:** Klar und lesbar, optimiert für kleine Bildschirme
-- **Navigation:** Bottom Navigation Bar mit 3 Tabs (Home, Stats, Premium)
+- **Navigation:** Bottom Navigation Bar mit 4 Tabs (Home, Planner, Stats, Library)
 - **Animationen:** Sanfte Übergänge, motivierende Fortschrittsanzeigen
 
 ---
@@ -103,10 +103,11 @@ Die tägliche Übersicht – der Screen, den Nutzer am häufigsten sehen.
 **Inhalt:**
 - Begrüßung mit Tageszeit (*„Good morning"*, *„Good evening"*, etc.)
 - Fortschrittsbalken: *„3 of 6 habits done today"*
-- Liste aller für heute geplanten Habits (aus dem Planner)
-- Jeder Habit zeigt: Icon, Name, geplante Uhrzeit, Streak
+- Liste aller Habits des Nutzers, sortiert:
+  1. Habits mit geplanter Uhrzeit (aus dem Planner) → oben, nach Zeit sortiert
+  2. Habits ohne geplante Zeit → darunter
+- Jeder Habit zeigt: Icon, Name, geplante Uhrzeit (falls vorhanden), Streak
 - Abhaken per Tap → Animation + kurzes positives Feedback
-- Habits ohne geplante Zeit erscheinen am Ende der Liste
 
 **Navigation zu:**
 - Habit-Detail-Screen (Tap auf Habit-Name → Infoseite)
@@ -119,12 +120,12 @@ Tagesansicht im Kalender-Stil (angelehnt an Google Calendar) – hier plant der 
 
 **Inhalt:**
 - Zeitstrahl des Tages (z. B. 06:00 – 23:00) mit stündlichen Slots
-- Habits können per Drag & Drop oder Tap in einen Zeitslot eingetragen werden
+- Habits werden per Tap hinzugefügt (Tap → TimePicker-Modal → Habit auswählen) – kein Drag & Drop in v1.0
 - Jeder Habit-Block zeigt: Icon, Name, Dauer
 - Datum-Auswahl oben (vor/zurück navigieren)
-- Wiederholungen einstellbar: täglich, bestimmte Wochentage
+- Wiederholungen einstellbar: täglich, bestimmte Wochentage, oder einmalig für einen Tag
 
-**Push-Benachrichtigung:**
+**Push-Benachrichtigung:** *(geplant für v2.0 / Premium)*
 - Zur geplanten Uhrzeit erhält der Nutzer eine Notification
 - Beispiel: *„🧘 Time to meditate – 5 minutes for your mind."*
 
@@ -168,7 +169,12 @@ Wissensbibliothek rund um Gewohnheitsbildung und mentale Gesundheit.
 - Wissenschaftlicher Hintergrund (einfach erklärt)
 - Praktische Anleitungen (z. B. geführte Atemübungen als Text)
 
-**Premium-Inhalte (gesperrt):**
+**Content-System:**
+- Alle Artikel & Infoseiten werden als `.md`-Dateien im Projektordner `assets/content/` gepflegt
+- Neue Inhalte können hinzugefügt werden, ohne den App-Code zu ändern
+- Rendering via `react-native-markdown-display`
+
+**Premium-Inhalte (v2.0):**
 - Geführte Meditationen (Audio)
 - Vorgefertigte Wellness-Pläne
 
@@ -223,7 +229,7 @@ Premium bedeutet bei MindFlow nicht einfach „mehr Features" – sondern ein **
 |---------|-----------|
 | Alle Habits tracken & abhaken | ✓ |
 | Streaks & Wochenübersicht | ✓ |
-| Planner (Tagesplanung & Notifications) | ✓ |
+| Planner (Tagesplanung) | ✓ |
 | Habit-Infoseiten & Tipps | ✓ |
 | Atomic Habits Bibliothek (Artikel) | ✓ |
 | Stats (Streak, Completion Rate, Heatmap) | ✓ |
@@ -283,10 +289,15 @@ Alle Premium-Inhalte sind direkt in den Habit-Flow integriert – der Nutzer öf
 
 ---
 
-## Mögliche Erweiterungen (Zukunft)
+## Mögliche Erweiterungen (v2.0+)
 
-- Push-Benachrichtigungen / Erinnerungen
-- Onboarding-Flow für neue Nutzer
+- **Onboarding-Flow** – 4-Screen Intro mit Habit-Auswahl (vollständig konzipiert, Umsetzung in v2.0)
+- **Premium-Abo & Paywall** – RevenueCat-Integration, geführte Meditationen, Wellness-Pläne
+- **Push-Notifications** – Lokale Erinnerungen zur geplanten Habit-Zeit (Expo Notifications)
+- **Cloud-Sync** – Supabase Backend & Auth, geräteübergreifende Synchronisation
+- **Custom Habits** – Eigene Habits mit Emoji-Picker und freiem Namen erstellen
+- **Habit Stacking UI** – Dedizierter Flow zum Verknüpfen von Habits
+- **Drag & Drop im Planner** – Zeitslots per Drag & Drop bearbeiten
 - Stimmungstracking (tägliche Eingabe)
 - KI-gestützte Meditationstexte & personalisierte Empfehlungen
 - Community-Features / Challenges
@@ -347,7 +358,7 @@ Dies senkt die Einstiegshürde und hilft besonders Einsteigern, den ersten Schri
 Nutzer können Habits miteinander verknüpfen – neue Gewohnheiten werden an bestehende geknüpft:
 > *„Nach meinem Morgenkaffee meditiere ich 5 Minuten."*
 
-Die App unterstützt das Erstellen solcher Verknüpfungen beim Einrichten eines neuen Habits.
+**Hinweis:** Kein dediziertes UI in v1.0. Der Nutzer setzt Habit Stacking selbst um, indem er im Planner Habits zeitlich direkt aufeinanderfolgend plant. Die Bibliothek erklärt das Konzept. Ein eigener UI-Flow ist für v2.0 geplant.
 
 ---
 
@@ -362,13 +373,15 @@ Umsetzung in der App:
 
 ## Onboarding-Flow
 
-### Prinzipien
+> **Status: Geplant für v2.0** – In v1.0 startet die App direkt auf dem Home-Screen. Ein vollständiger Onboarding-Flow wird in v2.0 implementiert.
+
+### Prinzipien (v2.0)
 - Keine Registrierung, keine Fragen – Nutzer starten sofort
 - Registrierung ist nur für Premium erforderlich
 - Emotional abholen, Mehrwert in wenigen Sekunden vermitteln
 - Max. 4 Screens, jeder mit einem klaren Fokus
 
-### Screen-by-Screen
+### Screen-by-Screen (v2.0)
 
 **Screen 1 – Welcome**
 - Großes, ruhiges Visual (Animation / Illustration)
@@ -401,7 +414,7 @@ Umsetzung in der App:
 
 ---
 
-### Registrierung (nur für Premium)
+### Registrierung (nur für Premium, v2.0)
 - Kein Account-Zwang beim Start
 - Beim Aktivieren von Premium: Registrierung via Apple, Google oder E-Mail
 - Lokale Daten werden beim Login mit dem Account verknüpft
@@ -424,7 +437,7 @@ Version 1.0 kommt vollständig ohne Backend aus. Alle Daten werden lokal auf dem
 | Navigation | React Navigation v6 | Bottom Tabs + Stack Navigation |
 | Lokaler Speicher | AsyncStorage | Einfache Key-Value Persistenz |
 | Datenverwaltung | Zustand | Leichtgewichtiges State Management |
-| Notifications | Expo Notifications | Lokale Benachrichtigungen, kein Server nötig |
+| Notifications | – | Erst in v2.0 als Premium-Feature |
 
 #### Ab v2.0 (Premium)
 | Bereich | Technologie | Begründung |
@@ -524,9 +537,10 @@ src/
 
 ### Notifications
 
-Lokale Push-Benachrichtigungen via Expo Notifications – kein Server erforderlich.
+> **Status: Geplant für v2.0 als Premium-Feature.** In v1.0 gibt es keine Push-Benachrichtigungen. Der Planner speichert Zeiten für die Darstellung, aber sendet keine Notifications.
 
-- Beim Planen eines Habits wird eine lokale Notification registriert
+**Geplante Umsetzung (v2.0):**
+- Beim Planen eines Habits wird eine lokale Notification registriert (Expo Notifications)
 - Bei Änderung der Zeit: alte Notification löschen, neue registrieren
 - Notification-ID wird im Planner-Eintrag gespeichert
 - Beispiel-Text: *„🧘 Time to meditate – 5 minutes for your mind."*
