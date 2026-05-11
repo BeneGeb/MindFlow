@@ -4,8 +4,9 @@ import { usePlannerStore } from '../store/plannerStore';
 import { today } from '../utils/dateHelpers';
 
 export interface TodayHabitEntry {
+  key: string;
   habit: Habit;
-  planned: PlannedHabit | null;
+  planned: PlannedHabit;
 }
 
 export const useTodayHabits = (): TodayHabitEntry[] => {
@@ -14,21 +15,16 @@ export const useTodayHabits = (): TodayHabitEntry[] => {
   usePlannerStore((s) => s.planned); // subscribe so changes trigger a re-render
   const todayPlanned = getForDate(today());
 
-  const plannedMap = new Map<string, PlannedHabit>();
-  for (const p of todayPlanned) {
-    plannedMap.set(p.habitId, p);
-  }
-
-  const withTime: TodayHabitEntry[] = [];
-
+  const habitMap = new Map<string, Habit>();
   for (const habit of activeHabits) {
-    const planned = plannedMap.get(habit.id) ?? null;
-    if (planned) {
-      withTime.push({ habit, planned });
-    }
+    habitMap.set(habit.id, habit);
   }
 
-  withTime.sort((a, b) => a.planned!.time.localeCompare(b.planned!.time));
+  const entries: TodayHabitEntry[] = todayPlanned
+    .filter((p) => habitMap.has(p.habitId))
+    .map((p) => ({ key: p.id, habit: habitMap.get(p.habitId)!, planned: p }));
 
-  return withTime;
+  entries.sort((a, b) => a.planned.time.localeCompare(b.planned.time));
+
+  return entries;
 };

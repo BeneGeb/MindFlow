@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,18 +6,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
-  TextInput,
-  Alert,
   Platform,
 } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useHabitStore } from '../store/habitStore';
 import { usePlannerStore } from '../store/plannerStore';
 import { RepeatMode, PlannedHabit } from '../types';
 import { PRESET_HABITS } from '../data/habits';
 import {
   today,
-  toDateString,
   getWeekDates,
   SHORT_DAY_NAMES,
   formatTime,
@@ -45,9 +42,24 @@ function AddPlanModal({
 }) {
   const addPlanned = usePlannerStore((s) => s.addPlanned);
   const [selectedHabitId, setSelectedHabitId] = useState(PRESET_HABITS[0].id);
-  const [time, setTime] = useState('08:00');
+  const [timeDate, setTimeDate] = useState(() => new Date());
+  const [showPicker, setShowPicker] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('daily');
   const [repeatDays, setRepeatDays] = useState<number[]>([1, 2, 3, 4, 5]);
+
+  useEffect(() => {
+    if (visible) {
+      setTimeDate(new Date());
+      setShowPicker(false);
+    }
+  }, [visible]);
+
+  const timeString = `${String(timeDate.getHours()).padStart(2, '0')}:${String(timeDate.getMinutes()).padStart(2, '0')}`;
+
+  const handleTimeChange = (event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') setShowPicker(false);
+    if (event.type === 'set' && date) setTimeDate(date);
+  };
 
   const toggleDay = (day: number) => {
     setRepeatDays((prev) =>
@@ -56,13 +68,9 @@ function AddPlanModal({
   };
 
   const handleSave = () => {
-    if (!time.match(/^\d{2}:\d{2}$/)) {
-      Alert.alert('Invalid time', 'Please enter time as HH:MM (e.g. 08:00)');
-      return;
-    }
     addPlanned({
       habitId: selectedHabitId,
-      time,
+      time: timeString,
       repeatMode,
       repeatDays: repeatMode === 'weekly' ? repeatDays : [],
       date: repeatMode === 'once' ? selectedDate : null,
@@ -109,19 +117,35 @@ function AddPlanModal({
 
           {/* Time */}
           <Text style={styles.sectionLabel}>TIME</Text>
-          <TextInput
-            style={styles.timeInput}
-            value={time}
-            onChangeText={setTime}
-            placeholder="08:00"
-            keyboardType="numbers-and-punctuation"
-            maxLength={5}
-          />
+          <TouchableOpacity
+            style={styles.timeDisplay}
+            onPress={() => setShowPicker(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.timeDisplayText}>{formatTime(timeString)}</Text>
+          </TouchableOpacity>
+          {showPicker && (
+            <DateTimePicker
+              value={timeDate}
+              mode="time"
+              is24Hour={true}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleTimeChange}
+            />
+          )}
+          {Platform.OS === 'ios' && showPicker && (
+            <TouchableOpacity
+              style={styles.pickerDoneBtn}
+              onPress={() => setShowPicker(false)}
+            >
+              <Text style={styles.pickerDoneText}>Done</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Repeat Mode */}
           <Text style={styles.sectionLabel}>REPEAT</Text>
           <View style={styles.repeatRow}>
-            {(['daily', 'weekly', 'once'] as RepeatMode[]).map((mode) => (
+            {(['daily', 'weekly'] as RepeatMode[]).map((mode) => (
               <TouchableOpacity
                 key={mode}
                 style={[
@@ -166,11 +190,6 @@ function AddPlanModal({
             </View>
           )}
 
-          {repeatMode === 'once' && (
-            <Text style={styles.onceNote}>
-              Will be scheduled for: {selectedDate}
-            </Text>
-          )}
         </ScrollView>
       </SafeAreaView>
     </Modal>
@@ -312,25 +331,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
   },
-  dayBtnActive: {
-    backgroundColor: colors.primary,
-  },
-  dayBtnLabel: {
-    ...typography.label,
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  dayBtnLabelActive: {
-    color: '#fff',
-  },
-  dayBtnDate: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  dayBtnDateActive: {
-    color: '#fff',
-  },
+  dayBtnActive: { backgroundColor: colors.primary },
+  dayBtnLabel: { ...typography.label, color: colors.textSecondary, marginBottom: 2 },
+  dayBtnLabelActive: { color: '#fff' },
+  dayBtnDate: { ...typography.body, fontWeight: '600', color: colors.textPrimary },
+  dayBtnDateActive: { color: '#fff' },
   todayDot: {
     width: 4,
     height: 4,
@@ -338,14 +343,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     marginTop: 2,
   },
-  todayDotActive: {
-    backgroundColor: '#fff',
-  },
+  todayDotActive: { backgroundColor: '#fff' },
   scroll: { flex: 1 },
-  content: {
-    padding: spacing.md,
-    paddingBottom: 100,
-  },
+  content: { padding: spacing.md, paddingBottom: 100 },
   entryCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -367,20 +367,9 @@ const styles = StyleSheet.create({
   entryInfo: { flex: 1 },
   entryName: { ...typography.body, fontWeight: '600', marginBottom: 2 },
   entryMeta: { ...typography.bodySmall, color: colors.textSecondary },
-  deleteBtn: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteIcon: {
-    fontSize: 16,
-    color: colors.textMuted,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingVertical: spacing.xxl,
-  },
+  deleteBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  deleteIcon: { fontSize: 16, color: colors.textMuted },
+  empty: { alignItems: 'center', paddingVertical: spacing.xxl },
   emptyIcon: { fontSize: 40, marginBottom: spacing.md },
   emptyTitle: { ...typography.h3, marginBottom: spacing.sm },
   emptyText: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
@@ -396,16 +385,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadow.md,
   },
-  fabIcon: {
-    fontSize: 28,
-    color: '#fff',
-    lineHeight: 32,
-  },
-  // Modal styles
-  modalSafe: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
+  fabIcon: { fontSize: 28, color: '#fff', lineHeight: 32 },
+  // Modal
+  modalSafe: { flex: 1, backgroundColor: colors.background },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -419,21 +401,14 @@ const styles = StyleSheet.create({
   modalTitle: { ...typography.h3 },
   modalCancel: { ...typography.body, color: colors.textSecondary },
   modalSave: { ...typography.body, color: colors.primary, fontWeight: '700' },
-  modalContent: {
-    padding: spacing.md,
-    paddingBottom: spacing.xxl,
-  },
+  modalContent: { padding: spacing.md, paddingBottom: spacing.xxl },
   sectionLabel: {
     ...typography.label,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
     letterSpacing: 0.8,
   },
-  habitGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
+  habitGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   habitChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -447,20 +422,30 @@ const styles = StyleSheet.create({
   },
   habitChipIcon: { fontSize: 16 },
   habitChipName: { ...typography.bodySmall, maxWidth: 80 },
-  timeInput: {
+  timeDisplay: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
+    alignItems: 'center',
+  },
+  timeDisplayText: {
     ...typography.h2,
-    textAlign: 'center',
-    letterSpacing: 4,
+    letterSpacing: 2,
+    color: colors.textPrimary,
   },
-  repeatRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  pickerDoneBtn: {
+    alignItems: 'flex-end',
+    paddingVertical: spacing.sm,
   },
+  pickerDoneText: {
+    ...typography.body,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  // Repeat
+  repeatRow: { flexDirection: 'row', gap: spacing.sm },
   repeatChip: {
     flex: 1,
     paddingVertical: spacing.sm,
@@ -469,18 +454,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignItems: 'center',
   },
-  repeatChipActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
-  },
+  repeatChipActive: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   repeatChipText: { ...typography.bodySmall, color: colors.textSecondary },
   repeatChipTextActive: { color: colors.primary, fontWeight: '600' },
-  dayRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-    flexWrap: 'wrap',
-  },
+  dayRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm, flexWrap: 'wrap' },
   dayChip: {
     width: 40,
     height: 40,
@@ -490,16 +467,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayChipActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary,
-  },
+  dayChipActive: { borderColor: colors.primary, backgroundColor: colors.primary },
   dayChipText: { ...typography.label, color: colors.textSecondary },
   dayChipTextActive: { color: '#fff' },
-  onceNote: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
 });

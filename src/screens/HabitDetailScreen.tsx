@@ -96,14 +96,6 @@ export default function HabitDetailScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Go to Planner */}
-        <TouchableOpacity
-          style={styles.planBtn}
-          onPress={() => navigation.navigate('MainTabs' as any)}
-        >
-          <Text style={styles.planBtnText}>📅 Plan this habit</Text>
-        </TouchableOpacity>
-
         {/* Markdown Content */}
         {loading ? (
           <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
@@ -196,20 +188,7 @@ const styles = StyleSheet.create({
   completeBtnTextDone: {
     color: '#fff',
   },
-  planBtn: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  planBtnText: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
+
 });
 
 const markdownStyles = {

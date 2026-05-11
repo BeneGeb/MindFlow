@@ -41,9 +41,9 @@ function NowDivider({ time }: { time: string }) {
 export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const todayHabits = useTodayHabits();
-  const toggle = useTrackingStore((s) => s.toggle);
-  const isCompleted = useTrackingStore((s) => s.isCompleted);
-  useTrackingStore((s) => s.tracking);
+  const toggleOccurrence = useTrackingStore((s) => s.toggleOccurrence);
+  const isOccurrenceCompleted = useTrackingStore((s) => s.isOccurrenceCompleted);
+  useTrackingStore((s) => s.occurrences);
   const todayStr = today();
 
   const [nowTime, setNowTime] = useState(getNowTime);
@@ -52,34 +52,32 @@ export default function HomeScreen() {
     return () => clearInterval(timer);
   }, []);
 
-  const completedCount = todayHabits.filter(({ habit }) =>
-    isCompleted(habit.id, todayStr),
+  const completedCount = todayHabits.filter(({ habit, planned }) =>
+    isOccurrenceCompleted(planned.id, habit.id, todayStr),
   ).length;
 
   const buildList = () => {
     const items: React.ReactNode[] = [];
     let dividerInserted = false;
 
-    for (const { habit, planned } of todayHabits) {
-      const habitTime = planned?.time ?? null;
-      const isPast = habitTime !== null && habitTime <= nowTime;
-      const isOverdue = habitTime !== null &&
-        minutesSince(habitTime, nowTime) > 60 &&
-        !isCompleted(habit.id, todayStr);
+    for (const { key, habit, planned } of todayHabits) {
+      const habitTime = planned.time;
+      const done = isOccurrenceCompleted(planned.id, habit.id, todayStr);
+      const isOverdue = minutesSince(habitTime, nowTime) > 60 && !done;
 
-      if (!dividerInserted && habitTime !== null && habitTime > nowTime) {
+      if (!dividerInserted && habitTime > nowTime) {
         items.push(<NowDivider key="__now__" time={nowTime} />);
         dividerInserted = true;
       }
 
       items.push(
         <HabitCard
-          key={habit.id}
+          key={key}
           habit={habit}
           planned={planned}
-          completed={isCompleted(habit.id, todayStr)}
+          completed={done}
           overdue={isOverdue}
-          onToggle={() => toggle(habit.id, todayStr)}
+          onToggle={() => toggleOccurrence(planned.id, habit.id, todayStr)}
           onPress={() => navigation.navigate('HabitDetail', { habitId: habit.id })}
         />,
       );
