@@ -5,12 +5,12 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Modal,
   TextInput,
   Alert,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHabitStore } from '../store/habitStore';
 import { usePlannerStore } from '../store/plannerStore';
 import { RepeatMode, PlannedHabit } from '../types';

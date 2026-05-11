@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.tabBarBorder,
     borderTopWidth: 1,
     paddingTop: 6,
-    height: 60,
+    paddingBottom: 8,
   },
   tabIcon: {
     fontSize: 22,

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { useHabitStore } from './src/store/habitStore';
 import { useTrackingStore } from './src/store/trackingStore';
@@ -20,11 +21,13 @@ export default function App() {
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
-      <NavigationContainer>
-        <StatusBar style="dark" backgroundColor={colors.background} />
-        <AppNavigator />
-      </NavigationContainer>
-    </View>
+    <SafeAreaProvider>
+      <View style={{ flex: 1 }}>
+        <NavigationContainer>
+          <StatusBar style="dark" backgroundColor={colors.background} />
+          <AppNavigator />
+        </NavigationContainer>
+      </View>
+    </SafeAreaProvider>
   );
 }
