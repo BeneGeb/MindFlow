@@ -10,6 +10,7 @@ interface Props {
   habit: Habit;
   planned: PlannedHabit | null;
   completed: boolean;
+  overdue?: boolean;
   onToggle: () => void;
   onPress: () => void;
 }
@@ -24,7 +25,7 @@ function StreakBadge({ habitId }: { habitId: string }) {
   );
 }
 
-export default function HabitCard({ habit, planned, completed, onToggle, onPress }: Props) {
+export default function HabitCard({ habit, planned, completed, overdue, onToggle, onPress }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const handleToggle = useCallback(() => {
@@ -37,7 +38,7 @@ export default function HabitCard({ habit, planned, completed, onToggle, onPress
   }, [onToggle, scale]);
 
   return (
-    <Animated.View style={[styles.card, { transform: [{ scale }] }, completed && styles.cardCompleted]}>
+    <Animated.View style={[styles.card, { transform: [{ scale }] }, overdue && styles.cardOverdue, completed && styles.cardCompleted]}>
       <TouchableOpacity style={styles.inner} onPress={onPress} activeOpacity={0.7}>
         <View style={[styles.iconContainer, { backgroundColor: habit.color + '22' }]}>
           <Text style={styles.icon}>{habit.icon}</Text>
@@ -51,7 +52,7 @@ export default function HabitCard({ habit, planned, completed, onToggle, onPress
         </View>
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.checkbox, completed && { backgroundColor: habit.color, borderColor: habit.color }]}
+        style={[styles.checkbox, completed && { backgroundColor: colors.primary, borderColor: colors.primary }]}
         onPress={handleToggle}
         activeOpacity={0.8}
       >
@@ -70,6 +71,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     paddingRight: spacing.md,
     ...shadow.sm,
+  },
+  cardOverdue: {
+    backgroundColor: '#FEF2F2',
   },
   cardCompleted: {
     opacity: 0.7,

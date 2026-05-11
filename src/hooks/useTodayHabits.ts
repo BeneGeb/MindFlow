@@ -11,6 +11,7 @@ export interface TodayHabitEntry {
 export const useTodayHabits = (): TodayHabitEntry[] => {
   const activeHabits = useActiveHabits();
   const getForDate = usePlannerStore((s) => s.getForDate);
+  usePlannerStore((s) => s.planned); // subscribe so changes trigger a re-render
   const todayPlanned = getForDate(today());
 
   const plannedMap = new Map<string, PlannedHabit>();
@@ -19,18 +20,15 @@ export const useTodayHabits = (): TodayHabitEntry[] => {
   }
 
   const withTime: TodayHabitEntry[] = [];
-  const withoutTime: TodayHabitEntry[] = [];
 
   for (const habit of activeHabits) {
     const planned = plannedMap.get(habit.id) ?? null;
     if (planned) {
       withTime.push({ habit, planned });
-    } else {
-      withoutTime.push({ habit, planned: null });
     }
   }
 
   withTime.sort((a, b) => a.planned!.time.localeCompare(b.planned!.time));
 
-  return [...withTime, ...withoutTime];
+  return withTime;
 };
