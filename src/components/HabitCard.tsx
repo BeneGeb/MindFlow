@@ -4,7 +4,7 @@ import * as Haptics from 'expo-haptics';
 import { Habit, PlannedHabit } from '../types';
 import { colors, spacing, radius, shadow, typography } from '../utils/theme';
 import { formatTime } from '../utils/dateHelpers';
-import { useStreak } from '../hooks/useStreak';
+import { useOccurrenceStreak } from '../hooks/useStreak';
 
 interface Props {
   habit: Habit;
@@ -15,8 +15,8 @@ interface Props {
   onPress: () => void;
 }
 
-function StreakBadge({ habitId }: { habitId: string }) {
-  const streak = useStreak(habitId);
+function StreakBadge({ planned }: { planned: PlannedHabit }) {
+  const streak = useOccurrenceStreak(planned);
   if (streak === 0) return null;
   return (
     <View style={styles.streakBadge}>
@@ -47,7 +47,7 @@ export default function HabitCard({ habit, planned, completed, overdue, onToggle
           <Text style={[styles.name, completed && styles.nameCompleted]}>{habit.name}</Text>
           <View style={styles.meta}>
             {planned && <Text style={styles.time}>{formatTime(planned.time)}</Text>}
-            <StreakBadge habitId={habit.id} />
+            {planned && <StreakBadge planned={planned} />}
           </View>
         </View>
       </TouchableOpacity>
