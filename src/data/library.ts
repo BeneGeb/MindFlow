@@ -1,34 +1,34 @@
 import { LibraryArticle } from '../types';
 
 export const LIBRARY_ARTICLES: LibraryArticle[] = [
-  // Atomic Habits
+  // Habit Science
   {
-    id: '4-laws',
-    title: 'The 4 Laws of Behavior Change',
-    description: 'The core framework behind every lasting habit.',
-    section: 'atomic-habits',
-    assetKey: 'library/4-laws',
+    id: 'how-habits-form',
+    title: 'How Habits Are Built',
+    description: 'The cue–routine–reward loop and what happens in your brain.',
+    section: 'habit-science',
+    assetKey: 'library/how-habits-form',
   },
   {
-    id: '2-minute-rule',
-    title: 'The 2-Minute Rule',
-    description: 'Make starting so easy you can\'t say no.',
-    section: 'atomic-habits',
-    assetKey: 'library/2-minute-rule',
+    id: 'start-small',
+    title: 'The Power of Starting Small',
+    description: 'Why tiny actions beat ambitious plans for lasting change.',
+    section: 'habit-science',
+    assetKey: 'library/start-small',
   },
   {
-    id: 'habit-stacking',
-    title: 'Habit Stacking',
-    description: 'Link new habits to existing ones for effortless routines.',
-    section: 'atomic-habits',
-    assetKey: 'library/habit-stacking',
+    id: 'habit-chaining',
+    title: 'Chaining Habits Together',
+    description: 'Anchor new behaviors to ones you already do automatically.',
+    section: 'habit-science',
+    assetKey: 'library/habit-chaining',
   },
   {
-    id: 'identity-habits',
-    title: 'Identity-Based Habits',
-    description: 'Become the person your habits are building.',
-    section: 'atomic-habits',
-    assetKey: 'library/identity-habits',
+    id: 'identity-and-habits',
+    title: 'Who You\'re Becoming',
+    description: 'How shifting your self-image makes habits feel effortless.',
+    section: 'habit-science',
+    assetKey: 'library/identity-and-habits',
   },
   // Mental Health
   {

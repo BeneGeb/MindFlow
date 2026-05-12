@@ -1,5 +1,4 @@
 import { Asset } from 'expo-asset';
-import * as FileSystem from 'expo-file-system';
 
 // Registry maps content keys to their require() module references.
 // Add new .md files here to make them available in the app.
@@ -11,11 +10,16 @@ const CONTENT_MAP: Record<string, number> = {
   'habit/exercise': require('../../assets/content/habits/exercise.md'),
   'habit/yoga': require('../../assets/content/habits/yoga.md'),
   'habit/breathing': require('../../assets/content/habits/breathing.md'),
-  // Library – Atomic Habits
+  // Library – Atomic Habits (kept for reference, not shown in UI)
   'library/4-laws': require('../../assets/content/library/atomic-habits/4-laws.md'),
   'library/2-minute-rule': require('../../assets/content/library/atomic-habits/2-minute-rule.md'),
   'library/habit-stacking': require('../../assets/content/library/atomic-habits/habit-stacking.md'),
   'library/identity-habits': require('../../assets/content/library/atomic-habits/identity-habits.md'),
+  // Library – Habit Science
+  'library/how-habits-form': require('../../assets/content/library/habit-science/how-habits-form.md'),
+  'library/start-small': require('../../assets/content/library/habit-science/start-small.md'),
+  'library/habit-chaining': require('../../assets/content/library/habit-science/habit-chaining.md'),
+  'library/identity-and-habits': require('../../assets/content/library/habit-science/identity-and-habits.md'),
   // Library – Mental Health
   'library/mental-health-overview': require('../../assets/content/library/mental-health/overview.md'),
 };
@@ -29,9 +33,10 @@ export async function loadContent(key: string): Promise<string> {
   if (!module) return `# Not found\n\nContent for "${key}" is not available.`;
 
   try {
-    const asset = await Asset.fromModule(module).downloadAsync();
-    if (!asset.localUri) throw new Error('No localUri');
-    const text = await FileSystem.readAsStringAsync(asset.localUri);
+    const asset = Asset.fromModule(module);
+    await asset.downloadAsync();
+    const response = await fetch(asset.uri);
+    const text = await response.text();
     cache[key] = text;
     return text;
   } catch {

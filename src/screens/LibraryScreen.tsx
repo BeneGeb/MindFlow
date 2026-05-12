@@ -61,8 +61,8 @@ function HabitArticleCard({
 export default function LibraryScreen() {
   const navigation = useNavigation<Nav>();
 
-  const atomicHabitsArticles = LIBRARY_ARTICLES.filter(
-    (a) => a.section === 'atomic-habits',
+  const habitScienceArticles = LIBRARY_ARTICLES.filter(
+    (a) => a.section === 'habit-science',
   );
   const mentalHealthArticles = LIBRARY_ARTICLES.filter(
     (a) => a.section === 'mental-health',
@@ -77,15 +77,15 @@ export default function LibraryScreen() {
       >
         <Text style={styles.title}>Library</Text>
 
-        {/* Atomic Habits Section */}
+        {/* Mental Health Section */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionEmoji}>📖</Text>
+          <Text style={styles.sectionEmoji}>🧠</Text>
           <View>
-            <Text style={styles.sectionTitle}>Atomic Habits</Text>
-            <Text style={styles.sectionSubtitle}>The science of habit building</Text>
+            <Text style={styles.sectionTitle}>Mental Health</Text>
+            <Text style={styles.sectionSubtitle}>Why these habits work</Text>
           </View>
         </View>
-        {atomicHabitsArticles.map((article) => (
+        {mentalHealthArticles.map((article) => (
           <ArticleCard
             key={article.id}
             article={article}
@@ -95,15 +95,15 @@ export default function LibraryScreen() {
           />
         ))}
 
-        {/* Mental Health Section */}
+        {/* Habit Science Section */}
         <View style={[styles.sectionHeader, { marginTop: spacing.lg }]}>
-          <Text style={styles.sectionEmoji}>🧠</Text>
+          <Text style={styles.sectionEmoji}>🧬</Text>
           <View>
-            <Text style={styles.sectionTitle}>Mental Health</Text>
-            <Text style={styles.sectionSubtitle}>Why these habits work</Text>
+            <Text style={styles.sectionTitle}>Habit Science</Text>
+            <Text style={styles.sectionSubtitle}>How habits really work</Text>
           </View>
         </View>
-        {mentalHealthArticles.map((article) => (
+        {habitScienceArticles.map((article) => (
           <ArticleCard
             key={article.id}
             article={article}

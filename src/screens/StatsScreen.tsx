@@ -4,8 +4,12 @@ import {
   Text,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useHabitStore } from '../store/habitStore';
 import { usePlannerStore } from '../store/plannerStore';
 import { useStreak, useOccurrenceStreak } from '../hooks/useStreak';
@@ -15,12 +19,17 @@ import HeatmapGrid from '../components/HeatmapGrid';
 import { Habit, PlannedHabit } from '../types';
 
 function HabitStatCard({ entry, habit }: { entry: PlannedHabit; habit: Habit }) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const streak = useOccurrenceStreak(entry);
   const rate = useOccurrenceCompletionRate(entry, 7);
   const heatmap = useOccurrenceHeatmapData(entry, 7);
 
   return (
-    <View style={styles.habitCard}>
+    <TouchableOpacity
+      style={styles.habitCard}
+      onPress={() => navigation.navigate('StatsDetail', { plannedId: entry.id })}
+      activeOpacity={0.7}
+    >
       <View style={styles.habitCardHeader}>
         <View style={[styles.habitIcon, { backgroundColor: habit.color + '22' }]}>
           <Text style={styles.habitIconText}>{habit.icon}</Text>
@@ -39,7 +48,7 @@ function HabitStatCard({ entry, habit }: { entry: PlannedHabit; habit: Habit }) 
       <View style={styles.heatmapRow}>
         <HeatmapGrid data={heatmap} color={habit.color} />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

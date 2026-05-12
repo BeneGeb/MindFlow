@@ -57,6 +57,36 @@ export const useLongestStreak = (habitId: string): number => {
   return longest;
 };
 
+export const useOccurrenceLongestStreak = (entry: PlannedHabit): number => {
+  const occurrences = useTrackingStore((s) => s.occurrences);
+
+  const completedDates = Object.keys(occurrences)
+    .filter((d) => !!occurrences[d]?.[entry.habitId]?.[entry.id])
+    .sort();
+
+  if (!completedDates.length) return 0;
+
+  const cursor = new Date(completedDates[0] + 'T12:00:00');
+  const today = new Date();
+  let longest = 0;
+  let current = 0;
+
+  while (cursor <= today) {
+    const dateStr = toDateString(cursor);
+    if (isActiveOnDate(entry, dateStr)) {
+      if (!!occurrences[dateStr]?.[entry.habitId]?.[entry.id]) {
+        current++;
+        if (current > longest) longest = current;
+      } else {
+        current = 0;
+      }
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return longest;
+};
+
 export const useOccurrenceStreak = (entry: PlannedHabit): number => {
   const occurrences = useTrackingStore((s) => s.occurrences);
 
