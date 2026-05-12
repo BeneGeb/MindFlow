@@ -61,6 +61,9 @@ function HabitArticleCard({
 export default function LibraryScreen() {
   const navigation = useNavigation<Nav>();
 
+  const habitScienceArticles = LIBRARY_ARTICLES.filter(
+    (a) => a.section === 'habit-science',
+  );
   const mentalHealthArticles = LIBRARY_ARTICLES.filter(
     (a) => a.section === 'mental-health',
   );
@@ -83,6 +86,24 @@ export default function LibraryScreen() {
           </View>
         </View>
         {mentalHealthArticles.map((article) => (
+          <ArticleCard
+            key={article.id}
+            article={article}
+            onPress={() =>
+              navigation.navigate('LibraryArticle', { articleId: article.id })
+            }
+          />
+        ))}
+
+        {/* Habit Science Section */}
+        <View style={[styles.sectionHeader, { marginTop: spacing.lg }]}>
+          <Text style={styles.sectionEmoji}>🧬</Text>
+          <View>
+            <Text style={styles.sectionTitle}>Habit Science</Text>
+            <Text style={styles.sectionSubtitle}>How habits really work</Text>
+          </View>
+        </View>
+        {habitScienceArticles.map((article) => (
           <ArticleCard
             key={article.id}
             article={article}

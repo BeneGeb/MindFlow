@@ -36,6 +36,6 @@ export interface LibraryArticle {
   id: string;
   title: string;
   description: string;
-  section: 'atomic-habits' | 'mental-health';
+  section: 'atomic-habits' | 'mental-health' | 'habit-science';
   assetKey: string; // key into CONTENT_MAP
 }
