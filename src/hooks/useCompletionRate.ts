@@ -41,6 +41,14 @@ export const useOccurrenceCompletionRate = (entry: PlannedHabit, days = 7): numb
   return Math.round((completed / activeDates.length) * 100);
 };
 
+export const useOccurrenceTotalCompletions = (entry: PlannedHabit): number => {
+  const occurrences = useTrackingStore((s) => s.occurrences);
+  return Object.values(occurrences).reduce(
+    (total, dayRecord) => total + (dayRecord[entry.habitId]?.[entry.id] ? 1 : 0),
+    0
+  );
+};
+
 export const useOccurrenceHeatmapData = (entry: PlannedHabit, days = 7): boolean[] => {
   const occurrences = useTrackingStore((s) => s.occurrences);
   return getLastNDays(days).map(
