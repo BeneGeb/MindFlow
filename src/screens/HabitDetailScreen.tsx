@@ -39,6 +39,11 @@ export default function HabitDetailScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (habit?.isCustom) {
+      setContent(habit.description ?? '');
+      setLoading(false);
+      return;
+    }
     const key = HABIT_CONTENT_KEY[habitId];
     if (key) {
       loadContent(key).then((text) => {
@@ -48,7 +53,7 @@ export default function HabitDetailScreen() {
     } else {
       setLoading(false);
     }
-  }, [habitId]);
+  }, [habitId, habit?.isCustom, habit?.description]);
 
   if (!habit) return null;
 
@@ -61,6 +66,14 @@ export default function HabitDetailScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
+        {habit.isCustom && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CreateHabit', { habitId: habit.id })}
+            style={styles.editBtn}
+          >
+            <Text style={styles.editBtnText}>Edit</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView
@@ -96,12 +109,16 @@ export default function HabitDetailScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Markdown Content */}
+        {/* Content */}
         {loading ? (
           <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
-        ) : (
+        ) : content ? (
           <Markdown style={markdownStyles}>{content}</Markdown>
-        )}
+        ) : habit.isCustom ? (
+          <Text style={styles.noDescription}>
+            No description yet. Tap Edit to add one.
+          </Text>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -116,6 +133,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   backBtn: {
     width: 40,
@@ -125,6 +145,21 @@ const styles = StyleSheet.create({
   backIcon: {
     fontSize: 24,
     color: colors.textPrimary,
+  },
+  editBtn: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  editBtnText: {
+    ...typography.body,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  noDescription: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: spacing.xl,
   },
   scroll: { flex: 1 },
   content: {
