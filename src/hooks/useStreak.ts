@@ -1,5 +1,7 @@
 import { useTrackingStore } from '../store/trackingStore';
 import { toDateString } from '../utils/dateHelpers';
+import { PlannedHabit } from '../types';
+import { isActiveOnDate } from '../store/plannerStore';
 
 export const useStreak = (habitId: string): number => {
   const tracking = useTrackingStore((s) => s.tracking);
@@ -53,4 +55,32 @@ export const useLongestStreak = (habitId: string): number => {
   }
 
   return longest;
+};
+
+export const useOccurrenceStreak = (entry: PlannedHabit): number => {
+  const occurrences = useTrackingStore((s) => s.occurrences);
+
+  let streak = 0;
+  let streakStarted = false;
+  const cursor = new Date();
+
+  for (let i = 0; i < 365; i++) {
+    const dateStr = toDateString(cursor);
+
+    if (isActiveOnDate(entry, dateStr)) {
+      const done = !!occurrences[dateStr]?.[entry.habitId]?.[entry.id];
+      if (done) {
+        streak++;
+        streakStarted = true;
+      } else {
+        // First active day not done yet (today) → keep looking back
+        if (streakStarted || i > 0) break;
+      }
+    }
+    // Non-active days are skipped without breaking the streak
+
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
 };

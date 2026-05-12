@@ -1,5 +1,7 @@
 import { useTrackingStore } from '../store/trackingStore';
 import { getLastNDays } from '../utils/dateHelpers';
+import { PlannedHabit } from '../types';
+import { isActiveOnDate } from '../store/plannerStore';
 
 export const useCompletionRate = (habitId: string, days = 7): number => {
   const tracking = useTrackingStore((s) => s.tracking);
@@ -26,4 +28,22 @@ export const useOverallCompletionRate = (habitIds: string[], days = 7): number =
 export const useHeatmapData = (habitId: string, days = 28): boolean[] => {
   const tracking = useTrackingStore((s) => s.tracking);
   return getLastNDays(days).map((d) => !!tracking[d]?.[habitId]);
+};
+
+export const useOccurrenceCompletionRate = (entry: PlannedHabit, days = 7): number => {
+  const occurrences = useTrackingStore((s) => s.occurrences);
+  const dates = getLastNDays(days);
+  const activeDates = dates.filter((d) => isActiveOnDate(entry, d));
+  if (!activeDates.length) return 0;
+  const completed = activeDates.filter(
+    (d) => !!occurrences[d]?.[entry.habitId]?.[entry.id]
+  ).length;
+  return Math.round((completed / activeDates.length) * 100);
+};
+
+export const useOccurrenceHeatmapData = (entry: PlannedHabit, days = 7): boolean[] => {
+  const occurrences = useTrackingStore((s) => s.occurrences);
+  return getLastNDays(days).map(
+    (d) => isActiveOnDate(entry, d) && !!occurrences[d]?.[entry.habitId]?.[entry.id]
+  );
 };
