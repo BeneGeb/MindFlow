@@ -6,17 +6,18 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useActiveHabits } from '../store/habitStore';
-import { useStreak } from '../hooks/useStreak';
-import { useCompletionRate, useOverallCompletionRate, useHeatmapData } from '../hooks/useCompletionRate';
+import { useHabitStore } from '../store/habitStore';
+import { usePlannerStore } from '../store/plannerStore';
+import { useStreak, useOccurrenceStreak } from '../hooks/useStreak';
+import { useOccurrenceCompletionRate, useOverallCompletionRate, useOccurrenceHeatmapData } from '../hooks/useCompletionRate';
 import { colors, spacing, radius, typography, shadow } from '../utils/theme';
 import HeatmapGrid from '../components/HeatmapGrid';
-import { Habit } from '../types';
+import { Habit, PlannedHabit } from '../types';
 
-function HabitStatCard({ habit }: { habit: Habit }) {
-  const streak = useStreak(habit.id);
-  const rate = useCompletionRate(habit.id, 7);
-  const heatmap = useHeatmapData(habit.id, 7);
+function HabitStatCard({ entry, habit }: { entry: PlannedHabit; habit: Habit }) {
+  const streak = useOccurrenceStreak(entry);
+  const rate = useOccurrenceCompletionRate(entry, 7);
+  const heatmap = useOccurrenceHeatmapData(entry, 7);
 
   return (
     <View style={styles.habitCard}>
@@ -26,7 +27,9 @@ function HabitStatCard({ habit }: { habit: Habit }) {
         </View>
         <View style={styles.habitInfo}>
           <Text style={styles.habitName}>{habit.name}</Text>
-          <Text style={styles.habitRate}>{rate}% this week</Text>
+          <Text style={styles.habitRate}>
+            {entry.time}{'  ·  '}{rate}% this week
+          </Text>
         </View>
         <View style={styles.streakBadge}>
           <Text style={styles.streakNum}>{streak}</Text>
@@ -42,8 +45,15 @@ function HabitStatCard({ habit }: { habit: Habit }) {
 
 function OverallStats({ habitIds }: { habitIds: string[] }) {
   const rate = useOverallCompletionRate(habitIds, 7);
-  const streaks = habitIds.map((id) => useStreak(id));
-  const longest = Math.max(0, ...streaks);
+  const s0 = useStreak(habitIds[0] ?? '');
+  const s1 = useStreak(habitIds[1] ?? '');
+  const s2 = useStreak(habitIds[2] ?? '');
+  const s3 = useStreak(habitIds[3] ?? '');
+  const s4 = useStreak(habitIds[4] ?? '');
+  const s5 = useStreak(habitIds[5] ?? '');
+  const s6 = useStreak(habitIds[6] ?? '');
+  const s7 = useStreak(habitIds[7] ?? '');
+  const longest = Math.max(0, s0, s1, s2, s3, s4, s5, s6, s7);
 
   return (
     <View style={styles.overallCard}>
@@ -61,7 +71,15 @@ function OverallStats({ habitIds }: { habitIds: string[] }) {
 }
 
 export default function StatsScreen() {
-  const habits = useActiveHabits();
+  const allHabits = useHabitStore((s) => s.habits);
+  const planned = usePlannerStore((s) => s.planned);
+
+  const plannedEntries = planned
+    .map((entry) => ({ entry, habit: allHabits.find((h) => h.id === entry.habitId) }))
+    .filter((item): item is { entry: PlannedHabit; habit: Habit } => item.habit != null)
+    .sort((a, b) => a.entry.time.localeCompare(b.entry.time));
+
+  const uniqueHabitIds = [...new Set(planned.map((p) => p.habitId))];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -72,21 +90,21 @@ export default function StatsScreen() {
       >
         <Text style={styles.title}>Stats</Text>
 
-        {habits.length === 0 ? (
+        {plannedEntries.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>📊</Text>
-            <Text style={styles.emptyTitle}>No data yet</Text>
+            <Text style={styles.emptyTitle}>No planned habits</Text>
             <Text style={styles.emptyText}>
-              Start completing habits to see your progress here.
+              Add habits in the Planner to track your stats here.
             </Text>
           </View>
         ) : (
           <>
-            <OverallStats habitIds={habits.map((h) => h.id)} />
+            <OverallStats habitIds={uniqueHabitIds} />
 
             <Text style={styles.sectionTitle}>Your Habits</Text>
-            {habits.map((habit) => (
-              <HabitStatCard key={habit.id} habit={habit} />
+            {plannedEntries.map(({ entry, habit }) => (
+              <HabitStatCard key={entry.id} entry={entry} habit={habit} />
             ))}
           </>
         )}

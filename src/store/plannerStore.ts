@@ -15,7 +15,7 @@ interface PlannerStore {
 
 const generateId = () => Math.random().toString(36).slice(2, 10);
 
-const isActiveOnDate = (entry: PlannedHabit, dateStr: string): boolean => {
+export const isActiveOnDate = (entry: PlannedHabit, dateStr: string): boolean => {
   if (entry.repeatMode === 'once') return entry.date === dateStr;
   if (entry.repeatMode === 'daily') return true;
   const dow = getDayOfWeek(dateStr);
