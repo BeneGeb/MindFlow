@@ -37,7 +37,7 @@ function HabitStatCard({ entry, habit }: { entry: PlannedHabit; habit: Habit }) 
         <View style={styles.habitInfo}>
           <Text style={styles.habitName}>{habit.name}</Text>
           <Text style={styles.habitRate}>
-            {entry.time}{'  ·  '}{rate}% this week
+            {entry.time ?? 'Any time'}{'  ·  '}{rate}% this week
           </Text>
         </View>
         <View style={styles.streakBadge}>
@@ -86,7 +86,7 @@ export default function StatsScreen() {
   const plannedEntries = planned
     .map((entry) => ({ entry, habit: allHabits.find((h) => h.id === entry.habitId) }))
     .filter((item): item is { entry: PlannedHabit; habit: Habit } => item.habit != null)
-    .sort((a, b) => a.entry.time.localeCompare(b.entry.time));
+    .sort((a, b) => (a.entry.time ?? '99:99').localeCompare(b.entry.time ?? '99:99'));
 
   const uniqueHabitIds = [...new Set(planned.map((p) => p.habitId))];
 

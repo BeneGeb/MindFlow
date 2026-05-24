@@ -24,7 +24,14 @@ export const useTodayHabits = (): TodayHabitEntry[] => {
     .filter((p) => habitMap.has(p.habitId))
     .map((p) => ({ key: p.id, habit: habitMap.get(p.habitId)!, planned: p }));
 
-  entries.sort((a, b) => a.planned.time.localeCompare(b.planned.time));
+  entries.sort((a, b) => {
+    const ta = a.planned.time;
+    const tb = b.planned.time;
+    if (!ta && !tb) return 0;
+    if (!ta) return 1;
+    if (!tb) return -1;
+    return ta.localeCompare(tb);
+  });
 
   return entries;
 };

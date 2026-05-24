@@ -47,6 +47,7 @@ function AddPlanModal({
   const updatePlanned = usePlannerStore((s) => s.updatePlanned);
   const allHabits = useHabitStore((s) => s.habits);
   const [selectedHabitId, setSelectedHabitId] = useState(PRESET_HABITS[0].id);
+  const [hasTime, setHasTime] = useState(false);
   const [timeDate, setTimeDate] = useState(() => new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('daily');
@@ -57,14 +58,20 @@ function AddPlanModal({
       setShowPicker(false);
       if (editEntry) {
         setSelectedHabitId(editEntry.habitId);
-        const [h, m] = editEntry.time.split(':').map(Number);
-        const d = new Date();
-        d.setHours(h, m, 0, 0);
-        setTimeDate(d);
+        if (editEntry.time) {
+          const [h, m] = editEntry.time.split(':').map(Number);
+          const d = new Date();
+          d.setHours(h, m, 0, 0);
+          setTimeDate(d);
+          setHasTime(true);
+        } else {
+          setHasTime(false);
+        }
         setRepeatMode(editEntry.repeatMode);
         setRepeatDays(editEntry.repeatDays);
       } else {
         setSelectedHabitId(PRESET_HABITS[0].id);
+        setHasTime(false);
         setTimeDate(new Date());
         setRepeatMode('daily');
         setRepeatDays([1, 2, 3, 4, 5]);
@@ -86,16 +93,17 @@ function AddPlanModal({
   };
 
   const handleSave = () => {
+    const savedTime = hasTime ? timeString : null;
     if (editEntry) {
       updatePlanned(editEntry.id, {
-        time: timeString,
+        time: savedTime,
         repeatMode,
         repeatDays: repeatMode === 'weekly' ? repeatDays : [],
       });
     } else {
       addPlanned({
         habitId: selectedHabitId,
-        time: timeString,
+        time: savedTime,
         repeatMode,
         repeatDays: repeatMode === 'weekly' ? repeatDays : [],
         date: null,
@@ -147,29 +155,51 @@ function AddPlanModal({
 
           {/* Time */}
           <Text style={styles.sectionLabel}>TIME</Text>
-          <TouchableOpacity
-            style={styles.timeDisplay}
-            onPress={() => setShowPicker(true)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.timeDisplayText}>{formatTime(timeString)}</Text>
-          </TouchableOpacity>
-          {showPicker && (
-            <DateTimePicker
-              value={timeDate}
-              mode="time"
-              is24Hour={true}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={handleTimeChange}
-            />
-          )}
-          {Platform.OS === 'ios' && showPicker && (
+          <View style={styles.repeatRow}>
             <TouchableOpacity
-              style={styles.pickerDoneBtn}
-              onPress={() => setShowPicker(false)}
+              style={[styles.repeatChip, !hasTime && styles.repeatChipActive]}
+              onPress={() => { setHasTime(false); setShowPicker(false); }}
             >
-              <Text style={styles.pickerDoneText}>Done</Text>
+              <Text style={[styles.repeatChipText, !hasTime && styles.repeatChipTextActive]}>
+                Any time
+              </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.repeatChip, hasTime && styles.repeatChipActive]}
+              onPress={() => setHasTime(true)}
+            >
+              <Text style={[styles.repeatChipText, hasTime && styles.repeatChipTextActive]}>
+                Set time
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {hasTime && (
+            <>
+              <TouchableOpacity
+                style={[styles.timeDisplay, { marginTop: spacing.sm }]}
+                onPress={() => setShowPicker(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.timeDisplayText}>{formatTime(timeString)}</Text>
+              </TouchableOpacity>
+              {showPicker && (
+                <DateTimePicker
+                  value={timeDate}
+                  mode="time"
+                  is24Hour={true}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={handleTimeChange}
+                />
+              )}
+              {Platform.OS === 'ios' && showPicker && (
+                <TouchableOpacity
+                  style={styles.pickerDoneBtn}
+                  onPress={() => setShowPicker(false)}
+                >
+                  <Text style={styles.pickerDoneText}>Done</Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
 
           {/* Repeat Mode */}
@@ -249,7 +279,7 @@ function PlannerEntry({
     <View style={styles.timelineRow}>
       {/* Left: time label + dot + connector */}
       <View style={[styles.timelineGutter, isLast && styles.timelineGutterLast]}>
-        <Text style={styles.timelineTime}>{formatTime(entry.time)}</Text>
+        <Text style={styles.timelineTime}>{entry.time ? formatTime(entry.time) : '–'}</Text>
         <View style={styles.timelineDot} />
         {!isLast && <View style={styles.timelineConnector} />}
       </View>
@@ -323,7 +353,7 @@ export default function PlannerScreen() {
           </View>
         ) : (
           entries
-            .sort((a, b) => a.time.localeCompare(b.time))
+            .sort((a, b) => (a.time ?? '99:99').localeCompare(b.time ?? '99:99'))
             .map((entry, index) => (
               <PlannerEntry
                 key={entry.id}

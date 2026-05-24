@@ -108,7 +108,7 @@ export default function StatsDetailScreen() {
           <Text style={styles.habitIcon}>{habit.icon}</Text>
           <Text style={styles.habitName}>{habit.name}</Text>
           <Text style={styles.habitMeta}>
-            {entry.time}{'  ·  '}{formatRepeat(entry)}
+            {entry.time ?? 'Any time'}{'  ·  '}{formatRepeat(entry)}
           </Text>
         </View>
 
