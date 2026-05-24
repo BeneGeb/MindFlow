@@ -87,43 +87,6 @@ Folgende Habits aus `src/data/habits.ts` sollen einen Tracker-Modus bekommen:
 
 ---
 
-## Issue #9 – Stressbarometer: Tägliches Stresslevel erfassen und visualisieren
-
-**Original-Titel:** Stressbarometer  
-**GitHub-Issue:** #9
-
-### Beschreibung
-Nutzer sollen täglich ihr aktuelles Stresslevel eingeben können und dieses über die Zeit verfolgen. Das Feature ergänzt den Habit-Tracking-Ansatz um einen subjektiven Wohlbefindens-Indikator.
-
-### User Flow
-1. Auf dem **Home-Screen** erscheint täglich (einmal pro Tag) ein kleines Banner/Card: *„Wie gestresst bist du heute?"*
-2. Der Nutzer wählt einen Wert auf einer **Skala von 1 bis 5** (Emojis: 😌 😐 😕 😟 😰)
-3. Das Banner verschwindet nach der Eingabe für den Rest des Tages
-4. Im **Stats-Screen** ist ein neuer Abschnitt „Stressverlauf" mit einem Liniendiagramm der letzten 14 Tage sichtbar
-
-### Technische Umsetzung
-1. **Neuer Store:** `src/store/stressStore.ts`
-   - State: `entries: { date: string; level: 1|2|3|4|5 }[]`
-   - Aktionen: `logStress(level)`, `getStressForDate(date)`, `getLast14Days()`
-   - Persistenz: AsyncStorage Key `mindflow:stress`
-2. **Home-Screen (`HomeScreen.tsx`):**
-   - Zeigt `StressBanner`-Komponente, wenn für `today()` noch kein Eintrag vorhanden
-   - Nach Eingabe: Banner ausblenden, kein Re-Prompt am selben Tag
-3. **Neue Komponente:** `src/components/StressBanner.tsx`
-   - 5 Emoji-Buttons in einer Row, tippbar
-   - Dezentes Design passend zum bestehenden Design-System (`theme.ts`)
-4. **Stats-Screen (`StatsScreen.tsx`):** Neuer Abschnitt mit `StressChart`-Komponente
-   - Einfaches Liniendiagramm via `react-native`-basierter SVG-Lösung oder simplem Custom-Component mit `View`-Bars (kein extra Chart-Package nötig für MVP)
-5. **App.tsx:** `stressStore` beim Start hydrieren (gleich wie die anderen Stores)
-
-### Akzeptanzkriterien
-- [ ] Nutzer kann täglich genau einmal sein Stresslevel eingeben
-- [ ] Kein erneutes Banner am gleichen Tag nach Eingabe
-- [ ] Stressverlauf der letzten 14 Tage im Stats-Screen sichtbar
-- [ ] Daten überleben App-Neustart (AsyncStorage-Persistenz)
-
----
-
 ## Issue #10 – Integrierter Wecker
 
 **Original-Titel:** Wecker  
