@@ -1,4 +1,5 @@
 import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system';
 
 // Registry maps content keys to their require() module references.
 // Add new .md files here to make them available in the app.
@@ -35,8 +36,8 @@ export async function loadContent(key: string): Promise<string> {
   try {
     const asset = Asset.fromModule(module);
     await asset.downloadAsync();
-    const response = await fetch(asset.uri);
-    const text = await response.text();
+    const uri = asset.localUri ?? asset.uri;
+    const text = await FileSystem.readAsStringAsync(uri);
     cache[key] = text;
     return text;
   } catch {
