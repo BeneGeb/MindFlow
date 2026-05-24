@@ -18,7 +18,8 @@ import { useStreak } from '../hooks/useStreak';
 import { useHeatmapData } from '../hooks/useCompletionRate';
 import { loadContent, HABIT_CONTENT_KEY } from '../utils/contentLoader';
 import { today } from '../utils/dateHelpers';
-import { colors, spacing, radius, typography, shadow } from '../utils/theme';
+import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 import HeatmapGrid from '../components/HeatmapGrid';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -28,6 +29,8 @@ export default function HabitDetailScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const { habitId } = route.params;
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
 
   const habit = useHabitStore((s) => s.habits.find((h) => h.id === habitId));
   const isCompleted = useTrackingStore((s) => s.isCompleted);
@@ -58,6 +61,7 @@ export default function HabitDetailScreen() {
   if (!habit) return null;
 
   const done = isCompleted(habit.id, today());
+  const mdStyles = makeMarkdownStyles(colors);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -113,7 +117,7 @@ export default function HabitDetailScreen() {
         {loading ? (
           <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
         ) : content ? (
-          <Markdown style={markdownStyles}>{content}</Markdown>
+          <Markdown style={mdStyles}>{content}</Markdown>
         ) : habit.isCustom ? (
           <Text style={styles.noDescription}>
             No description yet. Tap Edit to add one.
@@ -124,7 +128,7 @@ export default function HabitDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
@@ -178,6 +182,7 @@ const styles = StyleSheet.create({
   },
   heroName: {
     ...typography.h2,
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   statsCard: {
@@ -206,6 +211,7 @@ const styles = StyleSheet.create({
   },
   heatmapLabel: {
     ...typography.label,
+    color: colors.textSecondary,
     marginBottom: spacing.sm,
   },
   completeBtn: {
@@ -223,14 +229,13 @@ const styles = StyleSheet.create({
   completeBtnTextDone: {
     color: '#fff',
   },
-
 });
 
-const markdownStyles = {
+const makeMarkdownStyles = (colors: ColorTheme) => ({
   body: { color: colors.textPrimary, fontSize: 15, lineHeight: 24 },
-  heading1: { ...typography.h2, marginBottom: spacing.sm, marginTop: spacing.md },
-  heading2: { ...typography.h3, marginBottom: spacing.xs, marginTop: spacing.md },
-  heading3: { fontSize: 16, fontWeight: '600' as const, marginBottom: spacing.xs, marginTop: spacing.sm },
+  heading1: { ...typography.h2, color: colors.textPrimary, marginBottom: spacing.sm, marginTop: spacing.md },
+  heading2: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.xs, marginTop: spacing.md },
+  heading3: { fontSize: 16, fontWeight: '600' as const, color: colors.textPrimary, marginBottom: spacing.xs, marginTop: spacing.sm },
   paragraph: { marginBottom: spacing.md, color: colors.textPrimary },
   strong: { fontWeight: '700' as const },
   em: { fontStyle: 'italic' as const, color: colors.primary },
@@ -255,4 +260,4 @@ const markdownStyles = {
     borderRadius: 4,
     paddingHorizontal: 4,
   },
-};
+});

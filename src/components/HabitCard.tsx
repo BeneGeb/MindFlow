@@ -2,7 +2,8 @@ import React, { useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Habit, PlannedHabit } from '../types';
-import { colors, spacing, radius, shadow, typography } from '../utils/theme';
+import { ColorTheme, spacing, radius, shadow, typography } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 import { formatTime } from '../utils/dateHelpers';
 import { useOccurrenceStreak } from '../hooks/useStreak';
 
@@ -15,17 +16,19 @@ interface Props {
   onPress: () => void;
 }
 
-function StreakBadge({ planned }: { planned: PlannedHabit }) {
+function StreakBadge({ planned, colors }: { planned: PlannedHabit; colors: ColorTheme }) {
   const streak = useOccurrenceStreak(planned);
   if (streak === 0) return null;
   return (
-    <View style={styles.streakBadge}>
-      <Text style={styles.streakText}>🔥 {streak}</Text>
+    <View style={makeStyles(colors).streakBadge}>
+      <Text style={makeStyles(colors).streakText}>🔥 {streak}</Text>
     </View>
   );
 }
 
 export default function HabitCard({ habit, planned, completed, overdue, onToggle, onPress }: Props) {
+  const { colors, isDark } = useTheme();
+  const styles = makeStyles(colors);
   const scale = useRef(new Animated.Value(1)).current;
 
   const handleToggle = useCallback(() => {
@@ -37,8 +40,12 @@ export default function HabitCard({ habit, planned, completed, overdue, onToggle
     onToggle();
   }, [onToggle, scale]);
 
+  const overdueStyle = overdue
+    ? { backgroundColor: isDark ? '#3A1A1A' : '#FEF2F2' }
+    : undefined;
+
   return (
-    <Animated.View style={[styles.card, { transform: [{ scale }] }, overdue && styles.cardOverdue, completed && styles.cardCompleted]}>
+    <Animated.View style={[styles.card, { transform: [{ scale }] }, overdue && overdueStyle, completed && styles.cardCompleted]}>
       <TouchableOpacity style={styles.inner} onPress={onPress} activeOpacity={0.7}>
         <View style={[styles.iconContainer, { backgroundColor: habit.color + '22' }]}>
           <Text style={styles.icon}>{habit.icon}</Text>
@@ -47,7 +54,7 @@ export default function HabitCard({ habit, planned, completed, overdue, onToggle
           <Text style={[styles.name, completed && styles.nameCompleted]}>{habit.name}</Text>
           <View style={styles.meta}>
             {planned?.time && <Text style={styles.time}>{formatTime(planned.time)}</Text>}
-            {planned && <StreakBadge planned={planned} />}
+            {planned && <StreakBadge planned={planned} colors={colors} />}
           </View>
         </View>
       </TouchableOpacity>
@@ -62,7 +69,7 @@ export default function HabitCard({ habit, planned, completed, overdue, onToggle
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -71,9 +78,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     paddingRight: spacing.md,
     ...shadow.sm,
-  },
-  cardOverdue: {
-    backgroundColor: '#FEF2F2',
   },
   cardCompleted: {
     opacity: 0.7,
@@ -96,6 +100,7 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   name: {
     ...typography.body,
+    color: colors.textPrimary,
     fontWeight: '600',
     marginBottom: 2,
   },

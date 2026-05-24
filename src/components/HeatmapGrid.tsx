@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { colors, radius, spacing } from '../utils/theme';
+import { radius } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 
 interface Props {
   data: boolean[];  // oldest first
@@ -9,6 +10,8 @@ interface Props {
 }
 
 export default function HeatmapGrid({ data, color, columns = 7 }: Props) {
+  const { colors } = useTheme();
+
   return (
     <View style={[styles.grid, { gap: 4 }]}>
       {data.map((done, i) => (

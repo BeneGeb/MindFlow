@@ -12,7 +12,8 @@ import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useTodayHabits } from '../hooks/useTodayHabits';
 import { useTrackingStore } from '../store/trackingStore';
 import { today, getGreeting } from '../utils/dateHelpers';
-import { colors, spacing, typography } from '../utils/theme';
+import { ColorTheme, spacing, typography } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 import HabitCard from '../components/HabitCard';
 import ProgressBar from '../components/ProgressBar';
 
@@ -29,7 +30,8 @@ const minutesSince = (habitTime: string, nowTime: string): number => {
   return nH * 60 + nM - (hH * 60 + hM);
 };
 
-function NowDivider({ time }: { time: string }) {
+function NowDivider({ colors }: { colors: ColorTheme }) {
+  const styles = makeStyles(colors);
   return (
     <View style={styles.nowDivider}>
       <Text style={styles.nowLabel}>Now</Text>
@@ -40,6 +42,8 @@ function NowDivider({ time }: { time: string }) {
 
 export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const todayHabits = useTodayHabits();
   const toggleOccurrence = useTrackingStore((s) => s.toggleOccurrence);
   const isOccurrenceCompleted = useTrackingStore((s) => s.isOccurrenceCompleted);
@@ -89,7 +93,7 @@ export default function HomeScreen() {
       const isOverdue = minutesSince(habitTime, nowTime) > 60 && !done;
 
       if (!dividerInserted && habitTime > nowTime) {
-        items.push(<NowDivider key="__now__" time={nowTime} />);
+        items.push(<NowDivider key="__now__" colors={colors} />);
         dividerInserted = true;
       }
 
@@ -107,7 +111,7 @@ export default function HomeScreen() {
     }
 
     if (!dividerInserted && timed.length > 0) {
-      items.push(<NowDivider key="__now__" time={nowTime} />);
+      items.push(<NowDivider key="__now__" colors={colors} />);
     }
 
     // 3. Untimed, done — bottom
@@ -156,7 +160,7 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
@@ -171,6 +175,7 @@ const styles = StyleSheet.create({
   },
   greeting: {
     ...typography.h1,
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   subtitle: {
@@ -207,6 +212,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     ...typography.h3,
+    color: colors.textPrimary,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },

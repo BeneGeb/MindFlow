@@ -17,7 +17,8 @@ import {
   useOccurrenceTotalCompletions,
   useOccurrenceHeatmapData,
 } from '../hooks/useCompletionRate';
-import { colors, spacing, radius, typography, shadow } from '../utils/theme';
+import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 import HeatmapGrid from '../components/HeatmapGrid';
 import { SHORT_DAY_NAMES } from '../utils/dateHelpers';
 import { PlannedHabit } from '../types';
@@ -31,7 +32,8 @@ function formatRepeat(entry: PlannedHabit): string {
   return names.join(', ');
 }
 
-function StatBox({ value, label }: { value: string | number; label: string }) {
+function StatBox({ value, label, colors }: { value: string | number; label: string; colors: ColorTheme }) {
+  const styles = makeStyles(colors);
   return (
     <View style={styles.statBox}>
       <Text style={styles.statValue}>{value}</Text>
@@ -41,6 +43,8 @@ function StatBox({ value, label }: { value: string | number; label: string }) {
 }
 
 function StatsContent({ entry, habitColor }: { entry: PlannedHabit; habitColor: string }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const streak = useOccurrenceStreak(entry);
   const longest = useOccurrenceLongestStreak(entry);
   const rate7 = useOccurrenceCompletionRate(entry, 7);
@@ -51,13 +55,13 @@ function StatsContent({ entry, habitColor }: { entry: PlannedHabit; habitColor: 
   return (
     <>
       <View style={styles.statRow}>
-        <StatBox value={`${streak} 🔥`} label="Current streak" />
-        <StatBox value={`${longest} 🏆`} label="Best streak" />
+        <StatBox value={`${streak} 🔥`} label="Current streak" colors={colors} />
+        <StatBox value={`${longest} 🏆`} label="Best streak" colors={colors} />
       </View>
 
       <View style={styles.statRow}>
-        <StatBox value={`${rate7}%`} label="Last 7 days" />
-        <StatBox value={`${rate30}%`} label="Last 30 days" />
+        <StatBox value={`${rate7}%`} label="Last 7 days" colors={colors} />
+        <StatBox value={`${rate30}%`} label="Last 30 days" colors={colors} />
       </View>
 
       <View style={[styles.statBox, styles.totalBox]}>
@@ -77,6 +81,8 @@ export default function StatsDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute<Route>();
   const { plannedId } = route.params;
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
 
   const planned = usePlannerStore((s) => s.planned);
   const allHabits = useHabitStore((s) => s.habits);
@@ -118,7 +124,7 @@ export default function StatsDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
@@ -148,6 +154,7 @@ const styles = StyleSheet.create({
   },
   habitName: {
     ...typography.h2,
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   habitMeta: {
@@ -183,6 +190,7 @@ const styles = StyleSheet.create({
   },
   heatmapTitle: {
     ...typography.h3,
+    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   heatmapCard: {

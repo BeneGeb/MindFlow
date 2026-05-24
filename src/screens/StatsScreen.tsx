@@ -14,12 +14,15 @@ import { useHabitStore } from '../store/habitStore';
 import { usePlannerStore } from '../store/plannerStore';
 import { useStreak, useOccurrenceStreak } from '../hooks/useStreak';
 import { useOccurrenceCompletionRate, useOverallCompletionRate, useOccurrenceHeatmapData } from '../hooks/useCompletionRate';
-import { colors, spacing, radius, typography, shadow } from '../utils/theme';
+import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 import HeatmapGrid from '../components/HeatmapGrid';
 import { Habit, PlannedHabit } from '../types';
 
 function HabitStatCard({ entry, habit }: { entry: PlannedHabit; habit: Habit }) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const streak = useOccurrenceStreak(entry);
   const rate = useOccurrenceCompletionRate(entry, 7);
   const heatmap = useOccurrenceHeatmapData(entry, 7);
@@ -53,6 +56,8 @@ function HabitStatCard({ entry, habit }: { entry: PlannedHabit; habit: Habit }) 
 }
 
 function OverallStats({ habitIds }: { habitIds: string[] }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const rate = useOverallCompletionRate(habitIds, 7);
   const s0 = useStreak(habitIds[0] ?? '');
   const s1 = useStreak(habitIds[1] ?? '');
@@ -80,6 +85,8 @@ function OverallStats({ habitIds }: { habitIds: string[] }) {
 }
 
 export default function StatsScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const allHabits = useHabitStore((s) => s.habits);
   const planned = usePlannerStore((s) => s.planned);
 
@@ -122,7 +129,7 @@ export default function StatsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
@@ -134,6 +141,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h1,
+    color: colors.textPrimary,
     marginBottom: spacing.md,
   },
   overallCard: {
@@ -166,6 +174,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
+    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   habitCard: {
@@ -190,7 +199,7 @@ const styles = StyleSheet.create({
   },
   habitIconText: { fontSize: 20 },
   habitInfo: { flex: 1 },
-  habitName: { ...typography.body, fontWeight: '600', marginBottom: 2 },
+  habitName: { ...typography.body, color: colors.textPrimary, fontWeight: '600', marginBottom: 2 },
   habitRate: { ...typography.bodySmall, color: colors.textSecondary },
   streakBadge: {
     flexDirection: 'row',
@@ -211,7 +220,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxl,
   },
   emptyIcon: { fontSize: 48, marginBottom: spacing.md },
-  emptyTitle: { ...typography.h3, marginBottom: spacing.sm },
+  emptyTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
   emptyText: {
     ...typography.body,
     color: colors.textSecondary,
