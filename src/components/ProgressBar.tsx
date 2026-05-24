@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-import { colors, spacing, radius, typography } from '../utils/theme';
+import { ColorTheme, spacing, radius, typography } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 
 interface Props {
   completed: number;
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export default function ProgressBar({ completed, total }: Props) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const progress = useRef(new Animated.Value(0)).current;
   const ratio = total > 0 ? completed / total : 0;
 
@@ -37,7 +40,7 @@ export default function ProgressBar({ completed, total }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   container: {
     marginBottom: spacing.lg,
   },

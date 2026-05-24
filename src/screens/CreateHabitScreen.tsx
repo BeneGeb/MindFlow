@@ -14,7 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useHabitStore } from '../store/habitStore';
-import { colors, spacing, radius, typography, shadow } from '../utils/theme';
+import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 
 type Route = RouteProp<RootStackParamList, 'CreateHabit'>;
 
@@ -28,6 +29,8 @@ export default function CreateHabitScreen() {
   const navigation = useNavigation();
   const route = useRoute<Route>();
   const { habitId } = route.params ?? {};
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
 
   const { habits, addCustomHabit, updateCustomHabit, removeCustomHabit } = useHabitStore();
   const existing = habitId ? habits.find((h) => h.id === habitId) : null;
@@ -169,13 +172,13 @@ export default function CreateHabitScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
   content: { padding: spacing.md, paddingBottom: 320 },
   backBtn: { marginBottom: spacing.md },
   backText: { ...typography.body, color: colors.primary, fontWeight: '600' },
-  title: { ...typography.h1, marginBottom: spacing.lg },
+  title: { ...typography.h1, color: colors.textPrimary, marginBottom: spacing.lg },
   emojiPreview: {
     width: 96,
     height: 96,
@@ -188,6 +191,7 @@ const styles = StyleSheet.create({
   emojiDisplay: { fontSize: 52 },
   label: {
     ...typography.label,
+    color: colors.textSecondary,
     marginBottom: spacing.xs,
     marginTop: spacing.md,
   },
@@ -198,6 +202,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     fontSize: 28,
     textAlign: 'center',
+    color: colors.textPrimary,
     ...shadow.sm,
   },
   input: {

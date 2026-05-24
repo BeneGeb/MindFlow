@@ -14,17 +14,21 @@ import { LIBRARY_ARTICLES } from '../data/library';
 import { PRESET_HABITS } from '../data/habits';
 import { useHabitStore } from '../store/habitStore';
 import { LibraryArticle } from '../types';
-import { colors, spacing, radius, typography, shadow } from '../utils/theme';
+import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 function ArticleCard({
   article,
   onPress,
+  colors,
 }: {
   article: LibraryArticle;
   onPress: () => void;
+  colors: ColorTheme;
 }) {
+  const styles = makeStyles(colors);
   return (
     <TouchableOpacity style={styles.articleCard} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.articleContent}>
@@ -39,10 +43,13 @@ function ArticleCard({
 function HabitArticleCard({
   habitId,
   onPress,
+  colors,
 }: {
   habitId: string;
   onPress: () => void;
+  colors: ColorTheme;
 }) {
+  const styles = makeStyles(colors);
   const habit = useHabitStore((s) => s.habits.find((h) => h.id === habitId));
   if (!habit) return null;
   return (
@@ -61,6 +68,8 @@ function HabitArticleCard({
 
 export default function LibraryScreen() {
   const navigation = useNavigation<Nav>();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const customHabits = useHabitStore((s) => s.customHabits);
 
   const habitScienceArticles = LIBRARY_ARTICLES.filter(
@@ -91,6 +100,7 @@ export default function LibraryScreen() {
           <ArticleCard
             key={article.id}
             article={article}
+            colors={colors}
             onPress={() =>
               navigation.navigate('LibraryArticle', { articleId: article.id })
             }
@@ -109,6 +119,7 @@ export default function LibraryScreen() {
           <ArticleCard
             key={article.id}
             article={article}
+            colors={colors}
             onPress={() =>
               navigation.navigate('LibraryArticle', { articleId: article.id })
             }
@@ -133,6 +144,7 @@ export default function LibraryScreen() {
           <HabitArticleCard
             key={habit.id}
             habitId={habit.id}
+            colors={colors}
             onPress={() => navigation.navigate('HabitDetail', { habitId: habit.id })}
           />
         ))}
@@ -140,6 +152,7 @@ export default function LibraryScreen() {
           <HabitArticleCard
             key={habit.id}
             habitId={habit.id}
+            colors={colors}
             onPress={() => navigation.navigate('HabitDetail', { habitId: habit.id })}
           />
         ))}
@@ -148,7 +161,7 @@ export default function LibraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
@@ -160,6 +173,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h1,
+    color: colors.textPrimary,
     marginBottom: spacing.md,
   },
   sectionHeader: {
@@ -169,7 +183,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   sectionEmoji: { fontSize: 28 },
-  sectionTitle: { ...typography.h3 },
+  sectionTitle: { ...typography.h3, color: colors.textPrimary },
   sectionSubtitle: { ...typography.bodySmall, color: colors.textSecondary },
   articleCard: {
     backgroundColor: colors.surface,
@@ -181,7 +195,7 @@ const styles = StyleSheet.create({
     ...shadow.sm,
   },
   articleContent: { flex: 1 },
-  articleTitle: { ...typography.body, fontWeight: '600', marginBottom: 2 },
+  articleTitle: { ...typography.body, color: colors.textPrimary, fontWeight: '600', marginBottom: 2 },
   articleDesc: { ...typography.bodySmall, color: colors.textSecondary },
   articleArrow: {
     fontSize: 22,
@@ -207,7 +221,7 @@ const styles = StyleSheet.create({
   },
   habitCardIconText: { fontSize: 20 },
   habitCardContent: { flex: 1 },
-  habitCardName: { ...typography.body, fontWeight: '600', marginBottom: 2 },
+  habitCardName: { ...typography.body, color: colors.textPrimary, fontWeight: '600', marginBottom: 2 },
   habitCardSub: { ...typography.bodySmall, color: colors.textSecondary },
   createBtn: {
     backgroundColor: colors.primaryLight,

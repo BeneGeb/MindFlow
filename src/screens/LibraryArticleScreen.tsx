@@ -13,7 +13,8 @@ import Markdown from 'react-native-markdown-display';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { LIBRARY_ARTICLES } from '../data/library';
 import { loadContent } from '../utils/contentLoader';
-import { colors, spacing, radius, typography } from '../utils/theme';
+import { ColorTheme, spacing, radius, typography } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 
 type Route = RouteProp<RootStackParamList, 'LibraryArticle'>;
 
@@ -21,6 +22,8 @@ export default function LibraryArticleScreen() {
   const navigation = useNavigation();
   const route = useRoute<Route>();
   const { articleId } = route.params;
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
 
   const article = LIBRARY_ARTICLES.find((a) => a.id === articleId);
   const [content, setContent] = useState('');
@@ -36,6 +39,8 @@ export default function LibraryArticleScreen() {
       setLoading(false);
     });
   }, [article]);
+
+  const mdStyles = makeMarkdownStyles(colors);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -60,14 +65,14 @@ export default function LibraryArticleScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <Markdown style={markdownStyles}>{content}</Markdown>
+          <Markdown style={mdStyles}>{content}</Markdown>
         </ScrollView>
       )}
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
@@ -89,6 +94,7 @@ const styles = StyleSheet.create({
   backIcon: { fontSize: 24, color: colors.textPrimary },
   headerTitle: {
     ...typography.h3,
+    color: colors.textPrimary,
     flex: 1,
     textAlign: 'center',
   },
@@ -99,16 +105,16 @@ const styles = StyleSheet.create({
   },
 });
 
-const markdownStyles = {
+const makeMarkdownStyles = (colors: ColorTheme) => ({
   body: { color: colors.textPrimary, fontSize: 15, lineHeight: 24 },
-  heading1: { ...typography.h2, marginBottom: spacing.sm, marginTop: spacing.md },
-  heading2: { ...typography.h3, marginBottom: spacing.xs, marginTop: spacing.md },
+  heading1: { ...typography.h2, color: colors.textPrimary, marginBottom: spacing.sm, marginTop: spacing.md },
+  heading2: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.xs, marginTop: spacing.md },
   heading3: {
     fontSize: 16,
     fontWeight: '600' as const,
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
     marginTop: spacing.sm,
-    color: colors.textPrimary,
   },
   paragraph: { marginBottom: spacing.md, color: colors.textPrimary },
   strong: { fontWeight: '700' as const },
@@ -134,4 +140,4 @@ const markdownStyles = {
     borderRadius: 4,
     paddingHorizontal: 4,
   },
-};
+});

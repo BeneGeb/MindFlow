@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -29,6 +29,7 @@
     "plugins": [
       "expo-asset",
       "@react-native-community/datetimepicker",
+      ["expo-notifications", { "icon": "./assets/icon.png", "color": "#7F77DD" }],
       ["./plugins/withAndroidPrimaryColor", { "color": "#7F77DD" }]
     ]
   }

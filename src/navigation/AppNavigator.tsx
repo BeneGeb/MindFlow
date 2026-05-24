@@ -2,7 +2,8 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Text, StyleSheet } from 'react-native';
-import { colors, radius } from '../utils/theme';
+import { radius } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 
 import HomeScreen from '../screens/HomeScreen';
 import PlannerScreen from '../screens/PlannerScreen';
@@ -39,11 +40,19 @@ const TAB_ICONS: Record<string, string> = {
 };
 
 function MainTabs() {
+  const { colors } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: {
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.tabBarBorder,
+          borderTopWidth: 1,
+          paddingTop: 6,
+          paddingBottom: 8,
+        },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: styles.tabLabel,
@@ -75,13 +84,6 @@ export default function AppNavigator() {
 }
 
 const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.tabBar,
-    borderTopColor: colors.tabBarBorder,
-    borderTopWidth: 1,
-    paddingTop: 6,
-    paddingBottom: 8,
-  },
   tabIcon: {
     fontSize: 22,
     opacity: 0.5,

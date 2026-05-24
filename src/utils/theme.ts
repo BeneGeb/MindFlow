@@ -16,14 +16,34 @@ export const colors = {
   tabBarBorder: '#F0F0F0',
 };
 
+export const darkColors = {
+  primary: '#9D96E8',
+  primaryLight: '#2A2747',
+  accent: '#2CC68F',
+  accentLight: '#1A3D30',
+  background: '#0F0F17',
+  surface: '#1C1C2A',
+  border: '#2A2A3A',
+  textPrimary: '#F0EFF8',
+  textSecondary: '#9B9BB0',
+  textMuted: '#5C5C7A',
+  success: '#2CC68F',
+  warning: '#F0B84A',
+  error: '#F07070',
+  tabBar: '#1C1C2A',
+  tabBarBorder: '#2A2A3A',
+};
+
+export type ColorTheme = typeof colors;
+
 export const typography = {
-  h1: { fontSize: 28, fontWeight: '700' as const, color: colors.textPrimary },
-  h2: { fontSize: 22, fontWeight: '700' as const, color: colors.textPrimary },
-  h3: { fontSize: 18, fontWeight: '600' as const, color: colors.textPrimary },
-  body: { fontSize: 15, fontWeight: '400' as const, color: colors.textPrimary },
-  bodySmall: { fontSize: 13, fontWeight: '400' as const, color: colors.textSecondary },
-  label: { fontSize: 12, fontWeight: '500' as const, color: colors.textSecondary },
-  caption: { fontSize: 11, fontWeight: '400' as const, color: colors.textMuted },
+  h1: { fontSize: 28, fontWeight: '700' as const },
+  h2: { fontSize: 22, fontWeight: '700' as const },
+  h3: { fontSize: 18, fontWeight: '600' as const },
+  body: { fontSize: 15, fontWeight: '400' as const },
+  bodySmall: { fontSize: 13, fontWeight: '400' as const },
+  label: { fontSize: 12, fontWeight: '500' as const },
+  caption: { fontSize: 11, fontWeight: '400' as const },
 };
 
 export const spacing = {

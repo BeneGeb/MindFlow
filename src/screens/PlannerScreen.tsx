@@ -20,7 +20,8 @@ import {
   SHORT_DAY_NAMES,
   formatTime,
 } from '../utils/dateHelpers';
-import { colors, spacing, radius, typography, shadow } from '../utils/theme';
+import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
+import { useTheme } from '../utils/ThemeContext';
 
 const WEEK_DAYS = [
   { label: 'Sun', value: 0 },
@@ -43,6 +44,8 @@ function AddPlanModal({
   editEntry?: PlannedHabit;
   onClose: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const addPlanned = usePlannerStore((s) => s.addPlanned);
   const updatePlanned = usePlannerStore((s) => s.updatePlanned);
   const allHabits = useHabitStore((s) => s.habits);
@@ -52,6 +55,7 @@ function AddPlanModal({
   const [showPicker, setShowPicker] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('daily');
   const [repeatDays, setRepeatDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [reminderMinutes, setReminderMinutes] = useState<number | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -69,12 +73,14 @@ function AddPlanModal({
         }
         setRepeatMode(editEntry.repeatMode);
         setRepeatDays(editEntry.repeatDays);
+        setReminderMinutes(editEntry.reminderMinutes ?? null);
       } else {
         setSelectedHabitId(PRESET_HABITS[0].id);
         setHasTime(false);
         setTimeDate(new Date());
         setRepeatMode('daily');
         setRepeatDays([1, 2, 3, 4, 5]);
+        setReminderMinutes(null);
       }
     }
   }, [visible, editEntry]);
@@ -99,6 +105,7 @@ function AddPlanModal({
         time: savedTime,
         repeatMode,
         repeatDays: repeatMode === 'weekly' ? repeatDays : [],
+        reminderMinutes: hasTime ? reminderMinutes : null,
       });
     } else {
       addPlanned({
@@ -107,10 +114,19 @@ function AddPlanModal({
         repeatMode,
         repeatDays: repeatMode === 'weekly' ? repeatDays : [],
         date: null,
+        reminderMinutes: hasTime ? reminderMinutes : null,
       });
     }
     onClose();
   };
+
+  const REMINDER_OPTIONS: { label: string; value: number | null }[] = [
+    { label: 'None', value: null },
+    { label: '5 min', value: 5 },
+    { label: '10 min', value: 10 },
+    { label: '15 min', value: 15 },
+    { label: '30 min', value: 30 },
+  ];
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
@@ -158,7 +174,7 @@ function AddPlanModal({
           <View style={styles.repeatRow}>
             <TouchableOpacity
               style={[styles.repeatChip, !hasTime && styles.repeatChipActive]}
-              onPress={() => { setHasTime(false); setShowPicker(false); }}
+              onPress={() => { setHasTime(false); setShowPicker(false); setReminderMinutes(null); }}
             >
               <Text style={[styles.repeatChipText, !hasTime && styles.repeatChipTextActive]}>
                 Any time
@@ -199,6 +215,34 @@ function AddPlanModal({
                   <Text style={styles.pickerDoneText}>Done</Text>
                 </TouchableOpacity>
               )}
+            </>
+          )}
+
+          {/* Reminder — only visible when a time is set */}
+          {hasTime && (
+            <>
+              <Text style={styles.sectionLabel}>REMINDER</Text>
+              <View style={styles.reminderRow}>
+                {REMINDER_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={String(opt.value)}
+                    style={[
+                      styles.reminderChip,
+                      reminderMinutes === opt.value && styles.reminderChipActive,
+                    ]}
+                    onPress={() => setReminderMinutes(opt.value)}
+                  >
+                    <Text
+                      style={[
+                        styles.reminderChipText,
+                        reminderMinutes === opt.value && styles.reminderChipTextActive,
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </>
           )}
 
@@ -267,6 +311,8 @@ function PlannerEntry({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const habit = useHabitStore((s) => s.habits.find((h) => h.id === entry.habitId));
   if (!habit) return null;
 
@@ -302,6 +348,8 @@ function PlannerEntry({
 }
 
 export default function PlannerScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const weekDates = getWeekDates(new Date());
   const [selectedDate, setSelectedDate] = useState(today());
   const [modalVisible, setModalVisible] = useState(false);
@@ -385,7 +433,7 @@ export default function PlannerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
@@ -471,13 +519,13 @@ const styles = StyleSheet.create({
   },
   entryIcon: { fontSize: 20 },
   entryInfo: { flex: 1 },
-  entryName: { ...typography.body, fontWeight: '600', marginBottom: 2 },
+  entryName: { ...typography.body, color: colors.textPrimary, fontWeight: '600', marginBottom: 2 },
   entryMeta: { ...typography.bodySmall, color: colors.textSecondary },
   deleteBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   deleteIcon: { fontSize: 16, color: colors.textMuted },
   empty: { alignItems: 'center', paddingVertical: spacing.xxl },
   emptyIcon: { fontSize: 40, marginBottom: spacing.md },
-  emptyTitle: { ...typography.h3, marginBottom: spacing.sm },
+  emptyTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
   emptyText: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
   fab: {
     position: 'absolute',
@@ -504,12 +552,13 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     backgroundColor: colors.surface,
   },
-  modalTitle: { ...typography.h3 },
+  modalTitle: { ...typography.h3, color: colors.textPrimary },
   modalCancel: { ...typography.body, color: colors.textSecondary },
   modalSave: { ...typography.body, color: colors.primary, fontWeight: '700' },
   modalContent: { padding: spacing.md, paddingBottom: spacing.xxl },
   sectionLabel: {
     ...typography.label,
+    color: colors.textSecondary,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
     letterSpacing: 0.8,
@@ -527,7 +576,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   habitChipIcon: { fontSize: 16 },
-  habitChipName: { ...typography.bodySmall, maxWidth: 80 },
+  habitChipName: { ...typography.bodySmall, color: colors.textPrimary, maxWidth: 80 },
   timeDisplay: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -550,6 +599,24 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '700',
   },
+  // Reminder
+  reminderRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
+  reminderChip: {
+    flex: 1,
+    minWidth: 56,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  reminderChipActive: { borderColor: colors.accent, backgroundColor: colors.accentLight },
+  reminderChipText: { ...typography.bodySmall, color: colors.textSecondary },
+  reminderChipTextActive: { color: colors.accent, fontWeight: '600' },
   // Repeat
   repeatRow: { flexDirection: 'row', gap: spacing.sm },
   repeatChip: {
@@ -563,7 +630,7 @@ const styles = StyleSheet.create({
   repeatChipActive: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   repeatChipText: { ...typography.bodySmall, color: colors.textSecondary },
   repeatChipTextActive: { color: colors.primary, fontWeight: '600' },
-  dayRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm, flexWrap: 'wrap' },
+  dayRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm, flexWrap: 'wrap', justifyContent: 'center' },
   dayChip: {
     width: 40,
     height: 40,
