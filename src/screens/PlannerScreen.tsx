@@ -11,6 +11,7 @@ import {
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePlannerStore } from '../store/plannerStore';
+import { useHabitStore } from '../store/habitStore';
 import { RepeatMode, PlannedHabit } from '../types';
 import { PRESET_HABITS } from '../data/habits';
 import {
@@ -44,6 +45,7 @@ function AddPlanModal({
 }) {
   const addPlanned = usePlannerStore((s) => s.addPlanned);
   const updatePlanned = usePlannerStore((s) => s.updatePlanned);
+  const allHabits = useHabitStore((s) => s.habits);
   const [selectedHabitId, setSelectedHabitId] = useState(PRESET_HABITS[0].id);
   const [timeDate, setTimeDate] = useState(() => new Date());
   const [showPicker, setShowPicker] = useState(false);
@@ -121,7 +123,7 @@ function AddPlanModal({
             <>
               <Text style={styles.sectionLabel}>HABIT</Text>
               <View style={styles.habitGrid}>
-                {PRESET_HABITS.map((habit) => (
+                {allHabits.map((habit) => (
                   <TouchableOpacity
                     key={habit.id}
                     style={[
@@ -235,7 +237,7 @@ function PlannerEntry({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const habit = PRESET_HABITS.find((h) => h.id === entry.habitId);
+  const habit = useHabitStore((s) => s.habits.find((h) => h.id === entry.habitId));
   if (!habit) return null;
 
   const repeatLabel =

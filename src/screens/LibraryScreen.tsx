@@ -12,6 +12,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { LIBRARY_ARTICLES } from '../data/library';
 import { PRESET_HABITS } from '../data/habits';
+import { useHabitStore } from '../store/habitStore';
 import { LibraryArticle } from '../types';
 import { colors, spacing, radius, typography, shadow } from '../utils/theme';
 
@@ -42,7 +43,7 @@ function HabitArticleCard({
   habitId: string;
   onPress: () => void;
 }) {
-  const habit = PRESET_HABITS.find((h) => h.id === habitId);
+  const habit = useHabitStore((s) => s.habits.find((h) => h.id === habitId));
   if (!habit) return null;
   return (
     <TouchableOpacity style={styles.habitCard} onPress={onPress} activeOpacity={0.7}>
@@ -60,6 +61,7 @@ function HabitArticleCard({
 
 export default function LibraryScreen() {
   const navigation = useNavigation<Nav>();
+  const customHabits = useHabitStore((s) => s.customHabits);
 
   const habitScienceArticles = LIBRARY_ARTICLES.filter(
     (a) => a.section === 'habit-science',
@@ -116,18 +118,29 @@ export default function LibraryScreen() {
         {/* Habits Section */}
         <View style={[styles.sectionHeader, { marginTop: spacing.lg }]}>
           <Text style={styles.sectionEmoji}>✨</Text>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.sectionTitle}>Your Habits</Text>
             <Text style={styles.sectionSubtitle}>Deep dives into each practice</Text>
           </View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CreateHabit', {})}
+            style={styles.createBtn}
+          >
+            <Text style={styles.createBtnText}>+ New</Text>
+          </TouchableOpacity>
         </View>
         {PRESET_HABITS.map((habit) => (
           <HabitArticleCard
             key={habit.id}
             habitId={habit.id}
-            onPress={() =>
-              navigation.navigate('HabitDetail', { habitId: habit.id })
-            }
+            onPress={() => navigation.navigate('HabitDetail', { habitId: habit.id })}
+          />
+        ))}
+        {customHabits.map((habit) => (
+          <HabitArticleCard
+            key={habit.id}
+            habitId={habit.id}
+            onPress={() => navigation.navigate('HabitDetail', { habitId: habit.id })}
           />
         ))}
       </ScrollView>
@@ -196,4 +209,15 @@ const styles = StyleSheet.create({
   habitCardContent: { flex: 1 },
   habitCardName: { ...typography.body, fontWeight: '600', marginBottom: 2 },
   habitCardSub: { ...typography.bodySmall, color: colors.textSecondary },
+  createBtn: {
+    backgroundColor: colors.primaryLight,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  createBtnText: {
+    ...typography.bodySmall,
+    color: colors.primary,
+    fontWeight: '700',
+  },
 });

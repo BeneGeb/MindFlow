@@ -11,12 +11,14 @@ import LibraryScreen from '../screens/LibraryScreen';
 import HabitDetailScreen from '../screens/HabitDetailScreen';
 import LibraryArticleScreen from '../screens/LibraryArticleScreen';
 import StatsDetailScreen from '../screens/StatsDetailScreen';
+import CreateHabitScreen from '../screens/CreateHabitScreen';
 
 export type RootStackParamList = {
   MainTabs: undefined;
   HabitDetail: { habitId: string };
   LibraryArticle: { articleId: string };
   StatsDetail: { plannedId: string };
+  CreateHabit: { habitId?: string };
 };
 
 export type MainTabParamList = {
@@ -67,6 +69,7 @@ export default function AppNavigator() {
       <Stack.Screen name="HabitDetail" component={HabitDetailScreen} />
       <Stack.Screen name="LibraryArticle" component={LibraryArticleScreen} />
       <Stack.Screen name="StatsDetail" component={StatsDetailScreen} />
+      <Stack.Screen name="CreateHabit" component={CreateHabitScreen} />
     </Stack.Navigator>
   );
 }

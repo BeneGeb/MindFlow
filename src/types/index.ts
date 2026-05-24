@@ -6,7 +6,8 @@ export type HabitCategory =
   | 'yoga'
   | 'breathing'
   | 'sleep'
-  | 'digital-detox';
+  | 'digital-detox'
+  | 'custom';
 
 export interface Habit {
   id: string;
@@ -15,7 +16,8 @@ export interface Habit {
   color: string;
   category: HabitCategory;
   createdAt: string;
-  isCustom: false;
+  isCustom: boolean;
+  description?: string;
 }
 
 export type RepeatMode = 'daily' | 'weekly' | 'once';
