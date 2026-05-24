@@ -27,7 +27,130 @@ const PERIODS: { label: string; days: 7 | 30 | 90 }[] = [
   { label: '90 Tage', days: 90 },
 ];
 
-const CHART_H = 72;
+const CHART_H = 80;
+const CHART_PAD_X = 8;
+const CHART_PAD_Y = 10;
+
+function StressLineChart({
+  days,
+  levels,
+  showLabels,
+}: {
+  days: string[];
+  levels: Record<string, number>;
+  showLabels: boolean;
+}) {
+  const [chartWidth, setChartWidth] = useState(0);
+
+  const n = days.length;
+  const dotR = n <= 7 ? 5 : n <= 30 ? 3 : 2;
+  const strokeW = n <= 30 ? 2.5 : 1.5;
+
+  const getX = (i: number) =>
+    n <= 1
+      ? CHART_PAD_X + (chartWidth - 2 * CHART_PAD_X) / 2
+      : CHART_PAD_X + (i / (n - 1)) * (chartWidth - 2 * CHART_PAD_X);
+
+  const getY = (level: number) =>
+    CHART_PAD_Y + (1 - level / 10) * (CHART_H - 2 * CHART_PAD_Y);
+
+  const points = days.map((date, i) => {
+    const level = levels[date] ?? null;
+    return level !== null ? { x: getX(i), y: getY(level), level, date } : null;
+  });
+
+  const segments: { x1: number; y1: number; x2: number; y2: number }[] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    if (a && b) segments.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y });
+  }
+
+  const dots = points.filter((p): p is NonNullable<typeof p> => p !== null);
+
+  return (
+    <View onLayout={(e) => setChartWidth(e.nativeEvent.layout.width)}>
+      {chartWidth > 0 && (
+        <View style={{ height: CHART_H }}>
+          {/* Gridlines at low / mid / high */}
+          {[2, 5, 8].map((gl) => (
+            <View
+              key={gl}
+              style={{
+                position: 'absolute',
+                left: CHART_PAD_X,
+                right: CHART_PAD_X,
+                top: getY(gl),
+                height: 1,
+                backgroundColor: colors.border,
+              }}
+            />
+          ))}
+
+          {/* Line segments — rotated thin Views */}
+          {segments.map(({ x1, y1, x2, y2 }, i) => {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            return (
+              <View
+                key={i}
+                style={{
+                  position: 'absolute',
+                  width: len,
+                  height: strokeW,
+                  backgroundColor: colors.primary,
+                  left: (x1 + x2) / 2 - len / 2,
+                  top: (y1 + y2) / 2 - strokeW / 2,
+                  borderRadius: strokeW / 2,
+                  transform: [{ rotate: `${angle}deg` }],
+                }}
+              />
+            );
+          })}
+
+          {/* Colored dots per data point */}
+          {dots.map(({ x, y, level, date }) => (
+            <View
+              key={date}
+              style={{
+                position: 'absolute',
+                width: dotR * 2,
+                height: dotR * 2,
+                borderRadius: dotR,
+                backgroundColor: stressColor(level),
+                left: x - dotR,
+                top: y - dotR,
+                borderWidth: 1.5,
+                borderColor: colors.surface,
+              }}
+            />
+          ))}
+        </View>
+      )}
+
+      {/* Day labels — 7-day view only */}
+      {showLabels && chartWidth > 0 && (
+        <View style={{ flexDirection: 'row', marginTop: 4 }}>
+          {days.map((date, i) => (
+            <View
+              key={date}
+              style={{
+                flex: 1,
+                alignItems: i === 0 ? 'flex-start' : i === n - 1 ? 'flex-end' : 'center',
+              }}
+            >
+              <Text style={styles.dayLabel}>
+                {SHORT_DAY_NAMES[new Date(date + 'T12:00:00').getDay()]}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
 
 function StressSection() {
   const [period, setPeriod] = useState<7 | 30 | 90>(7);
@@ -39,8 +162,6 @@ function StressSection() {
     recorded.length > 0
       ? Math.round((recorded.reduce((sum, d) => sum + levels[d], 0) / recorded.length) * 10) / 10
       : null;
-
-  const gap = period === 7 ? 6 : period === 30 ? 3 : 1;
 
   return (
     <View style={styles.stressCard}>
@@ -68,49 +189,7 @@ function StressSection() {
         ))}
       </View>
 
-      {/* Bar chart */}
-      <View style={{ flexDirection: 'row', height: CHART_H, gap }}>
-        {days.map((date) => {
-          const level = levels[date] ?? null;
-          const col = level !== null ? stressColor(level) : colors.border;
-          return (
-            <View
-              key={date}
-              style={{
-                flex: 1,
-                height: CHART_H,
-                backgroundColor: colors.border + '50',
-                borderRadius: 3,
-                overflow: 'hidden',
-                justifyContent: 'flex-end',
-              }}
-            >
-              {level !== null && (
-                <View
-                  style={{
-                    width: '100%',
-                    height: `${(level / 10) * 100}%` as any,
-                    backgroundColor: col,
-                  }}
-                />
-              )}
-            </View>
-          );
-        })}
-      </View>
-
-      {/* Day labels — only for 7-day view */}
-      {period === 7 && (
-        <View style={{ flexDirection: 'row', gap, marginTop: 4 }}>
-          {days.map((date) => (
-            <View key={date} style={{ flex: 1, alignItems: 'center' }}>
-              <Text style={styles.dayLabel}>
-                {SHORT_DAY_NAMES[new Date(date + 'T12:00:00').getDay()]}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
+      <StressLineChart days={days} levels={levels} showLabels={period === 7} />
 
       {recorded.length === 0 && (
         <Text style={styles.stressEmpty}>
