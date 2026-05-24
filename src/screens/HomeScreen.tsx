@@ -58,10 +58,33 @@ export default function HomeScreen() {
 
   const buildList = () => {
     const items: React.ReactNode[] = [];
-    let dividerInserted = false;
 
-    for (const { key, habit, planned } of todayHabits) {
-      const habitTime = planned.time;
+    const untimedPending = todayHabits.filter(
+      ({ habit, planned }) => !planned.time && !isOccurrenceCompleted(planned.id, habit.id, todayStr),
+    );
+    const timed = todayHabits.filter(({ planned }) => planned.time !== null);
+    const untimedDone = todayHabits.filter(
+      ({ habit, planned }) => !planned.time && isOccurrenceCompleted(planned.id, habit.id, todayStr),
+    );
+
+    // 1. Untimed, not yet done — top
+    for (const { key, habit, planned } of untimedPending) {
+      items.push(
+        <HabitCard
+          key={key}
+          habit={habit}
+          planned={planned}
+          completed={false}
+          onToggle={() => toggleOccurrence(planned.id, habit.id, todayStr)}
+          onPress={() => navigation.navigate('HabitDetail', { habitId: habit.id })}
+        />,
+      );
+    }
+
+    // 2. Timed habits — sorted by time, with NowDivider
+    let dividerInserted = false;
+    for (const { key, habit, planned } of timed) {
+      const habitTime = planned.time!;
       const done = isOccurrenceCompleted(planned.id, habit.id, todayStr);
       const isOverdue = minutesSince(habitTime, nowTime) > 60 && !done;
 
@@ -83,8 +106,22 @@ export default function HomeScreen() {
       );
     }
 
-    if (!dividerInserted && todayHabits.length > 0) {
+    if (!dividerInserted && timed.length > 0) {
       items.push(<NowDivider key="__now__" time={nowTime} />);
+    }
+
+    // 3. Untimed, done — bottom
+    for (const { key, habit, planned } of untimedDone) {
+      items.push(
+        <HabitCard
+          key={key}
+          habit={habit}
+          planned={planned}
+          completed={true}
+          onToggle={() => toggleOccurrence(planned.id, habit.id, todayStr)}
+          onPress={() => navigation.navigate('HabitDetail', { habitId: habit.id })}
+        />,
+      );
     }
 
     return items;

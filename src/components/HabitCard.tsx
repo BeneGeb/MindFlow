@@ -46,7 +46,7 @@ export default function HabitCard({ habit, planned, completed, overdue, onToggle
         <View style={styles.content}>
           <Text style={[styles.name, completed && styles.nameCompleted]}>{habit.name}</Text>
           <View style={styles.meta}>
-            {planned && <Text style={styles.time}>{formatTime(planned.time)}</Text>}
+            {planned?.time && <Text style={styles.time}>{formatTime(planned.time)}</Text>}
             {planned && <StreakBadge planned={planned} />}
           </View>
         </View>

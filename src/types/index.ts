@@ -25,7 +25,7 @@ export type RepeatMode = 'daily' | 'weekly' | 'once';
 export interface PlannedHabit {
   id: string;
   habitId: string;
-  time: string; // "HH:MM"
+  time: string | null; // "HH:MM", or null if no fixed time
   repeatMode: RepeatMode;
   repeatDays: number[]; // 0=Sun … 6=Sat, used when repeatMode === 'weekly'
   date: string | null; // ISO date string, used when repeatMode === 'once'
