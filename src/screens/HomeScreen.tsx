@@ -15,6 +15,7 @@ import { today, getGreeting } from '../utils/dateHelpers';
 import { colors, spacing, typography } from '../utils/theme';
 import HabitCard from '../components/HabitCard';
 import ProgressBar from '../components/ProgressBar';
+import StressBarometer from '../components/StressBarometer';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -136,6 +137,8 @@ export default function HomeScreen() {
       >
         <Text style={styles.greeting}>{getGreeting()} 👋</Text>
         <Text style={styles.subtitle}>Here are your habits for today.</Text>
+
+        <StressBarometer />
 
         <ProgressBar completed={completedCount} total={todayHabits.length} />
 

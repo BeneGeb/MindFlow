@@ -7,17 +7,20 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { useHabitStore } from './src/store/habitStore';
 import { useTrackingStore } from './src/store/trackingStore';
 import { usePlannerStore } from './src/store/plannerStore';
+import { useStressStore } from './src/store/stressStore';
 import { colors } from './src/utils/theme';
 
 export default function App() {
   const hydrateHabits = useHabitStore((s) => s.hydrate);
   const hydrateTracking = useTrackingStore((s) => s.hydrate);
   const hydratePlanner = usePlannerStore((s) => s.hydrate);
+  const hydrateStress = useStressStore((s) => s.hydrate);
 
   useEffect(() => {
     hydrateHabits();
     hydrateTracking();
     hydratePlanner();
+    hydrateStress();
   }, []);
 
   return (

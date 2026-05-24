@@ -29,4 +29,5 @@ export const STORAGE_KEYS = {
   PLANNER: 'mindflow:planner',
   OCCURRENCES: 'mindflow:occurrences',
   CUSTOM_HABITS: 'mindflow:custom_habits',
+  STRESS: 'mindflow:stress',
 } as const;
