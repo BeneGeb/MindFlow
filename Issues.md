@@ -5,50 +5,6 @@ Neue Issues werden **unten angehängt**. Bereits dokumentierte Issues werden **n
 
 ---
 
-## Issue #7 – Infoseiten (Library-Artikel) funktionieren nicht im Production-Build
-
-**Original-Titel:** Infoseiten funktionieren nicht im Build  
-**GitHub-Issue:** #7
-
-### Problem
-Im Expo Development-Client funktionieren die Library-Artikel und Habit-Infoseiten korrekt. Im Production-Build (APK/IPA via `eas build`) sind die Seiten leer oder zeigen eine Fehlermeldung.
-
-### Ursache
-In `src/utils/contentLoader.ts` wird nach `asset.downloadAsync()` ein `fetch(asset.uri)` aufgerufen, um den Markdown-Inhalt zu lesen. Im Production-Build liefert `asset.uri` eine gebündelte URI (z. B. `asset://`-Schema oder eine lokale Bundle-Referenz), die von `fetch()` nicht aufgelöst werden kann. Im Dev-Client wird ein HTTP-Dev-Server verwendet, weshalb `fetch()` dort funktioniert.
-
-### Lösung
-`expo-file-system` ist bereits als Abhängigkeit vorhanden. Nach `asset.downloadAsync()` ist `asset.localUri` garantiert gesetzt. Statt `fetch(asset.uri)` soll `FileSystem.readAsStringAsync(asset.localUri!)` verwendet werden.
-
-**Datei:** `src/utils/contentLoader.ts`
-
-```ts
-import * as FileSystem from 'expo-file-system';
-
-export async function loadContent(key: string): Promise<string> {
-  if (cache[key]) return cache[key];
-  const module = CONTENT_MAP[key];
-  if (!module) return `# Not found\n\nContent for "${key}" is not available.`;
-  try {
-    const asset = Asset.fromModule(module);
-    await asset.downloadAsync();
-    // Vorher: const response = await fetch(asset.uri);
-    // Nachher:
-    const text = await FileSystem.readAsStringAsync(asset.localUri!);
-    cache[key] = text;
-    return text;
-  } catch {
-    return `# Error\n\nFailed to load content for "${key}".`;
-  }
-}
-```
-
-### Akzeptanzkriterien
-- [ ] Library-Artikel und Habit-Infoseiten laden korrekt in einem APK-Build (eas build --platform android --profile preview)
-- [ ] Kein Fehlerfall bei `fetch` auf gebündelten Assets
-- [ ] Dev-Client-Verhalten bleibt unverändert
-
----
-
 ## Issue #8 – Aktivitäts-Timer für zeitbasierte Habits (Sport, Meditation, Joggen)
 
 **Original-Titel:** tracker  
@@ -84,51 +40,6 @@ Folgende Habits aus `src/data/habits.ts` sollen einen Tracker-Modus bekommen:
 - [ ] Abgeschlossene Session wird gespeichert und im Stats-Screen angezeigt
 - [ ] Bei Meditation: Countdown endet mit Haptic-Feedback und optionalem Ton (falls `expo-av` installiert wird)
 - [ ] Habit gilt nach Abschluss als erledigt (trackingStore wird aktualisiert)
-
----
-
-## Issue #10 – Integrierter Wecker
-
-**Original-Titel:** Wecker  
-**GitHub-Issue:** #10
-
-### Beschreibung
-Die App soll einen eigenen Wecker bieten, mit dem Nutzer Alarmzeiten direkt in MindFlow einrichten können. Anders als die Habit-Benachrichtigungen (Issue #13) ist dies ein eigenständiger Wecker, der **unabhängig von einem Habit** geplant wird – z. B. als Morgenroutine-Starter.
-
-### User Flow
-1. Nutzer öffnet den **Planner-Tab**
-2. Neuer Abschnitt „Wecker" unterhalb der Habit-Timeline
-3. Nutzer kann per **+**-Button eine Alarmzeit einstellen (Zeitpicker, Tage auswählen)
-4. Alarm erscheint als Karte in der Liste mit Toggle (aktiv/inaktiv)
-5. Zum eingestellten Zeitpunkt ertönt eine lokale Benachrichtigung / systemischer Alarm
-
-### Technische Umsetzung
-1. **Package:** `expo-notifications` (für lokale Benachrichtigungen) – muss installiert werden:
-   ```bash
-   npx expo install expo-notifications
-   ```
-   > Hinweis: Push Notifications benötigen einen Development Build. Im Expo Go Client sind lokale Notifications eingeschränkt.
-2. **Neuer Store:** `src/store/alarmStore.ts`
-   - State: `alarms: Alarm[]`
-   - Typ: `{ id: string; time: string; days: number[]; enabled: boolean; notificationIds: string[] }`
-   - Aktionen: `addAlarm`, `toggleAlarm`, `deleteAlarm`
-   - Persistenz: AsyncStorage Key `mindflow:alarms`
-3. **Notification-Helper:** `src/utils/notificationService.ts`
-   - `scheduleAlarm(alarm: Alarm): Promise<string[]>` – plant Benachrichtigungen für jeden aktiven Tag
-   - `cancelAlarm(notificationIds: string[])` – entfernt alle geplanten Notifications
-4. **UI:** Erweiterung von `PlannerScreen.tsx` oder neuer separater Screen
-   - Liste der Alarme mit Icon 🔔, Uhrzeit, Wochentagen und Switch
-5. **`app.json`:** Notification-Permissions für iOS/Android konfigurieren
-
-### Einschränkungen
-- Echter systemischer Alarm (Ertönen bei gesperrtem Gerät) erfordert ggf. einen Custom Expo Dev Build
-- Im Expo Go Client nur eingeschränkt testbar
-
-### Akzeptanzkriterien
-- [ ] Nutzer kann Alarmzeit und Wochentage einstellen
-- [ ] Alarm lässt sich aktivieren/deaktivieren
-- [ ] Alarm kann gelöscht werden (zugehörige Notifications werden gecancelled)
-- [ ] Bei aktivem Alarm: lokale Notification zum geplanten Zeitpunkt
 
 ---
 
@@ -189,63 +100,6 @@ Da dies viele Dateien betrifft, empfiehlt sich folgende Reihenfolge:
 - [ ] Alle Screens sind im Dark Mode lesbar (kein weißer Text auf weißem Hintergrund etc.)
 - [ ] Navigation-Bar und Tab-Bar folgen dem Dark Mode
 - [ ] Kein Hard-Coded `#FFFFFF` oder `#1A1A2E` mehr in Screens/Components
-
----
-
-## Issue #13 – Lokale Habit-Benachrichtigungen mit konfigurierbarem Vorlauf
-
-**Original-Titel:** Benachrichtigung einbauen  
-**GitHub-Issue:** #13
-
-### Beschreibung
-Für jeden geplanten Habit soll der Nutzer eine lokale Erinnerungsbenachrichtigung einrichten können. Die Benachrichtigung soll eine konfigurierbare Zeitspanne **vor** der geplanten Habit-Zeit ausgelöst werden (z. B. 5, 10, 15 oder 30 Minuten vorher). Habits ohne feste Zeit erhalten keine Benachrichtigung.
-
-### User Flow
-1. In der **`AddPlanModal`** (`PlannerScreen.tsx`) erscheint, wenn eine Zeit gesetzt ist, ein neuer Abschnitt „Erinnerung"
-2. Nutzer kann wählen: Keine Erinnerung / 5 Min vorher / 10 Min / 15 Min / 30 Min
-3. Nach dem Speichern wird die Benachrichtigung automatisch geplant
-4. Beim Bearbeiten oder Löschen eines Plans werden die zugehörigen Benachrichtigungen aktualisiert/entfernt
-
-### Technische Umsetzung
-1. **Package installieren:**
-   ```bash
-   npx expo install expo-notifications
-   ```
-
-2. **`src/types/index.ts`:** `PlannedHabit`-Typ um `reminderMinutes: number | null` und `notificationId: string | null` erweitern
-
-3. **`src/utils/notificationService.ts`** (neu):
-   ```ts
-   export async function requestPermissions(): Promise<boolean>
-   export async function scheduleHabitReminder(entry: PlannedHabit, habitName: string): Promise<string | null>
-   export async function cancelReminder(notificationId: string): Promise<void>
-   ```
-
-4. **`src/store/plannerStore.ts`:** Bei `addPlanned` und `updatePlanned` die Notification-Logik aufrufen; `notificationId` im Store speichern. Bei `removePlanned` die Notification cancellen.
-
-5. **`PlannerScreen.tsx` – `AddPlanModal`:** Neuer UI-Abschnitt „ERINNERUNG" (nur sichtbar, wenn `hasTime === true`):
-   ```
-   [ Keine ] [ 5 Min ] [ 10 Min ] [ 15 Min ] [ 30 Min ]
-   ```
-
-6. **`App.tsx`:** `requestPermissions()` beim App-Start aufrufen (einmalig, mit Expo-Standard-Permission-Flow)
-
-7. **`app.json`:** Notification-Plugin konfigurieren:
-   ```json
-   "plugins": [["expo-notifications", { "icon": "./assets/icon.png" }]]
-   ```
-
-### Einschränkungen
-- Notifications funktionieren nur im **Development Build** (nicht im Expo Go Client)
-- Für iOS ist eine explizite Nutzer-Erlaubnis erforderlich
-- Wiederkehrende Habits (daily/weekly) erfordern mehrere scheduled Notifications (eine pro Occurrence in den nächsten ~4 Wochen) oder einen periodischen Reschedule
-
-### Akzeptanzkriterien
-- [ ] Nutzer kann pro Habit-Plan eine Erinnerungszeit auswählen
-- [ ] Benachrichtigung erscheint zum konfigurierten Zeitpunkt (auch wenn App geschlossen ist)
-- [ ] Löschen eines Plans entfernt die zugehörige Benachrichtigung
-- [ ] Bearbeiten eines Plans aktualisiert Zeitpunkt/Vorlauf der Benachrichtigung
-- [ ] Bei Habits ohne Zeit ist das Erinnerungs-UI ausgeblendet
 
 ---
 
@@ -337,3 +191,109 @@ dayRow: {
 - [ ] Die 7 Wochentagsbuttons sind horizontal zentriert im Modal
 - [ ] Auf kleinen Bildschirmen (320 px Breite) kein Abschneiden der Buttons
 - [ ] Visuell konsistent mit den anderen Chip-Rows im Modal (`repeatRow` etc.)
+
+---
+
+## Issue #18 – Konfigurierbare Habit-Erinnerungsbenachrichtigungen
+
+**Original-Titel:** Benachrichtigung für Habits  
+**GitHub-Issue:** #18
+
+### Beschreibung
+Für jeden geplanten Habit soll der Nutzer eine lokale Push-Benachrichtigung einrichten können, die ihn rechtzeitig an das Erledigen seiner Gewohnheit erinnert. Der Zeitraum, wie viel Zeit vor der geplanten Habit-Zeit die Benachrichtigung erscheinen soll, ist vom Nutzer frei konfigurierbar (z. B. 5, 10, 15 oder 30 Minuten vorher). Habits ohne feste Uhrzeit erhalten keine Erinnerung.
+
+### Kontext
+Issue #13 (Benachrichtigung einbauen) wurde ohne Implementierung geschlossen. Issue #18 ist die Neuaufnahme derselben Anforderung und soll nun vollständig umgesetzt werden.
+
+### User Flow
+1. Beim Anlegen oder Bearbeiten eines Habit-Plans im **Planner-Modal** (`PlannerScreen.tsx`) erscheint — sofern eine Uhrzeit gesetzt ist — ein neuer Abschnitt „Erinnerung"
+2. Der Nutzer wählt den gewünschten Vorlauf: **Keine** / **5 Min** / **10 Min** / **15 Min** / **30 Min**
+3. Nach dem Speichern wird die lokale Benachrichtigung automatisch geplant
+4. Beim Bearbeiten oder Löschen eines Plans werden die zugehörigen Benachrichtigungen aktualisiert bzw. entfernt
+
+### Technische Umsetzung
+
+#### 1. Paket installieren
+```bash
+npx expo install expo-notifications
+```
+> **Hinweis:** Lokale Notifications funktionieren nur im **Expo Development Build**, nicht im Expo Go Client.
+
+#### 2. `app.json` – Plugin konfigurieren
+```json
+"plugins": [
+  ["expo-notifications", { "icon": "./assets/icon.png", "color": "#7F77DD" }]
+]
+```
+
+#### 3. `src/types/index.ts` – `PlannedHabit` erweitern
+```ts
+export interface PlannedHabit {
+  // ... bestehende Felder ...
+  reminderMinutes: number | null;   // Vorlauf in Minuten; null = keine Erinnerung
+  notificationIds: string[];        // IDs der geplanten Notifications (eine pro Occurrence)
+}
+```
+
+#### 4. `src/utils/notificationService.ts` (neue Datei)
+```ts
+import * as Notifications from 'expo-notifications';
+
+export async function requestPermissions(): Promise<boolean>
+
+export async function scheduleHabitReminder(
+  entry: PlannedHabit,
+  habitName: string
+): Promise<string[]>
+// Berechnet alle Trigger-Zeitpunkte (Habit-Zeit minus reminderMinutes)
+// für die nächsten ~4 Wochen (für daily/weekly Habits).
+// Gibt die Notification-IDs zurück, die im Store gespeichert werden.
+
+export async function cancelReminders(notificationIds: string[]): Promise<void>
+```
+
+#### 5. `src/store/plannerStore.ts` – Notification-Logik integrieren
+- **`addPlanned`:** Nach dem Speichern `scheduleHabitReminder` aufrufen, zurückgegebene `notificationIds` im Store-Eintrag ablegen
+- **`updatePlanned`:** Alte Notifications via `cancelReminders` entfernen, neue planen
+- **`removePlanned`:** `cancelReminders` für die gespeicherten IDs des gelöschten Eintrags aufrufen
+
+#### 6. `src/screens/PlannerScreen.tsx` – UI-Erweiterung im Modal
+Neuer Abschnitt „ERINNERUNG" direkt unterhalb des Zeitpickers (nur sichtbar, wenn `hasTime === true`):
+
+```
+[ Keine ] [ 5 Min ] [ 10 Min ] [ 15 Min ] [ 30 Min ]
+```
+
+Als Chip-Row analog zur bestehenden `repeatRow`-Implementierung. State-Variable: `reminderMinutes: number | null`, Initial `null`.
+
+#### 7. `App.tsx` – Permissions beim Start anfragen
+```ts
+import { requestPermissions } from '@/utils/notificationService';
+
+// In useEffect beim App-Start (einmalig):
+await requestPermissions();
+```
+
+### Einschränkungen
+- Funktioniert nur im **Expo Development Build** (nicht im Expo Go Client)
+- **iOS** erfordert explizite Nutzererlaubnis (Permission-Dialog erscheint einmalig beim ersten Start)
+- Expo erlaubt max. **64 geplante Notifications** pro App → bei vielen Habits mit daily-Repeat ggf. Begrenzung auf die nächsten 2–3 Wochen pro Habit
+- Wiederkehrende Habits (daily/weekly) erfordern mehrere separate `scheduleNotificationAsync`-Aufrufe (eine pro Occurrence)
+
+### Betroffene Dateien
+| Datei | Änderung |
+|-------|----------|
+| `app.json` | Plugin-Eintrag für `expo-notifications` |
+| `src/types/index.ts` | `PlannedHabit` um `reminderMinutes` + `notificationIds` erweitern |
+| `src/utils/notificationService.ts` | Neue Datei: Permission-Request, Schedule, Cancel |
+| `src/store/plannerStore.ts` | Notification-Aufrufe in add/update/remove integrieren |
+| `src/screens/PlannerScreen.tsx` | Erinnerungs-Chip-Row im AddPlanModal |
+| `App.tsx` | `requestPermissions()` beim Start |
+
+### Akzeptanzkriterien
+- [ ] Nutzer kann pro Habit-Plan einen Erinnerungsvorlauf auswählen (Keine / 5 / 10 / 15 / 30 Min)
+- [ ] Benachrichtigung erscheint zum konfigurierten Zeitpunkt, auch wenn die App geschlossen ist
+- [ ] Löschen eines Plans entfernt alle zugehörigen Benachrichtigungen
+- [ ] Bearbeiten eines Plans aktualisiert Zeitpunkt und Vorlauf der Benachrichtigung
+- [ ] Bei Habits ohne Uhrzeit ist der Erinnerungs-Abschnitt im Modal ausgeblendet
+- [ ] iOS: Permission-Dialog erscheint beim ersten App-Start
