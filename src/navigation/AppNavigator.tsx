@@ -25,7 +25,6 @@ export type MainTabParamList = {
   Home: undefined;
   Planner: undefined;
   Stats: undefined;
-  Library: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -35,7 +34,6 @@ const TAB_ICONS: Record<string, string> = {
   Home: '🏠',
   Planner: '📅',
   Stats: '📊',
-  Library: '📚',
 };
 
 function MainTabs() {
@@ -57,7 +55,6 @@ function MainTabs() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Planner" component={PlannerScreen} />
       <Tab.Screen name="Stats" component={StatsScreen} />
-      <Tab.Screen name="Library" component={LibraryScreen} />
     </Tab.Navigator>
   );
 }
