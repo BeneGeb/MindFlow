@@ -71,19 +71,21 @@ jobs:
         run: |
           APK_PATH="${{ steps.find_apk.outputs.apk_path }}"
           APK_NAME="${{ steps.find_apk.outputs.apk_name }}"
-          FILE_SIZE=$(du -m "$APK_PATH" | cut -f1)
+          FILE_SIZE_BYTES=$(stat -c%s "$APK_PATH")
+          FILE_SIZE_MB=$((FILE_SIZE_BYTES / 1024 / 1024))
+          echo "APK Größe: ${FILE_SIZE_MB}MB"
 
-          if [ "$FILE_SIZE" -gt 50 ]; then
-            # APK zu groß für Telegram – Link senden
+          if [ "$FILE_SIZE_BYTES" -gt 52428800 ]; then
+            # APK zu groß für Telegram (>50MB) – Link senden
             curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
               -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-              -d text="✅ Build erfolgreich!%0A📦 APK: $APK_NAME%0A⚠️ Datei zu groß für Telegram (${FILE_SIZE}MB)%0A⬇️ Download unter:%0Ahttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              -d text="✅ Build erfolgreich!%0A📦 APK: $APK_NAME%0A⚠️ Datei zu groß für Telegram (${FILE_SIZE_MB}MB)%0A⬇️ Download unter:%0Ahttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           else
             # APK direkt senden
             curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
               -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
               -F document=@"$APK_PATH" \
-              -F caption="✅ Build erfolgreich!%0A📦 $APK_NAME%0A🔀 Commit: ${{ github.sha }}"
+              -F caption="✅ Build erfolgreich! (${FILE_SIZE_MB}MB)%0A📦 $APK_NAME%0A🔀 Commit: ${{ github.sha }}"
           fi
 
       # ── Bei Fehler Telegram benachrichtigen ──────────────
