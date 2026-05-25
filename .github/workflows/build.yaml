@@ -1,0 +1,95 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: # Manueller Start über GitHub UI möglich
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Repository auschecken ─────────────────────────
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js einrichten ────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── 3. Java einrichten ───────────────────────────────
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # ── 4. Android SDK einrichten ────────────────────────
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # ── 5. npm Abhängigkeiten installieren ───────────────
+      - name: Install Dependencies
+        run: npm install
+
+      # ── 6. Expo Prebuild ─────────────────────────────────
+      - name: Expo Prebuild
+        run: npx expo prebuild --platform android --clean
+        env:
+          CI: '1'
+
+      # ── 7. APK bauen ─────────────────────────────────────
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleRelease
+
+      # ── 8. APK finden ────────────────────────────────────
+      - name: Find APK
+        id: find_apk
+        run: |
+          APK=$(find android -name "*.apk" | grep -i release | head -1)
+          echo "apk_path=$APK" >> $GITHUB_OUTPUT
+          echo "apk_name=$(basename $APK)" >> $GITHUB_OUTPUT
+          echo "APK gefunden: $APK"
+
+      # ── 9. APK als Artifact speichern ────────────────────
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MindFlow-release
+          path: ${{ steps.find_apk.outputs.apk_path }}
+          retention-days: 7
+
+      # ── 10. APK per Telegram senden ──────────────────────
+      - name: Send APK via Telegram
+        run: |
+          APK_PATH="${{ steps.find_apk.outputs.apk_path }}"
+          APK_NAME="${{ steps.find_apk.outputs.apk_name }}"
+          FILE_SIZE=$(du -m "$APK_PATH" | cut -f1)
+
+          if [ "$FILE_SIZE" -gt 50 ]; then
+            # APK zu groß für Telegram – Link senden
+            curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+              -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+              -d text="✅ Build erfolgreich!%0A📦 APK: $APK_NAME%0A⚠️ Datei zu groß für Telegram (${FILE_SIZE}MB)%0A⬇️ Download unter:%0Ahttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          else
+            # APK direkt senden
+            curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+              -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+              -F document=@"$APK_PATH" \
+              -F caption="✅ Build erfolgreich!%0A📦 $APK_NAME%0A🔀 Commit: ${{ github.sha }}"
+          fi
+
+      # ── Bei Fehler Telegram benachrichtigen ──────────────
+      - name: Notify Telegram on Failure
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="❌ Build fehlgeschlagen!%0A🔀 Commit: ${{ github.sha }}%0A📋 Details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
