@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
   Modal,
   Platform,
+  Alert,
+  Linking,
 } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePlannerStore } from '../store/plannerStore';
@@ -56,6 +59,19 @@ function AddPlanModal({
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('daily');
   const [repeatDays, setRepeatDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [reminderMinutes, setReminderMinutes] = useState<number | null>(null);
+  const [notifPermission, setNotifPermission] = useState<boolean>(true);
+
+  // Check notification permission whenever the modal opens
+  useEffect(() => {
+    if (visible) {
+      Notifications.getPermissionsAsync()
+        .then((result) => {
+          const granted = (result as any).granted ?? (result as any).status === 'granted';
+          setNotifPermission(granted);
+        })
+        .catch(() => setNotifPermission(false));
+    }
+  }, [visible]);
 
   useEffect(() => {
     if (visible) {
@@ -126,6 +142,8 @@ function AddPlanModal({
     { label: '10 min', value: 10 },
     { label: '15 min', value: 15 },
     { label: '30 min', value: 30 },
+    { label: '1 hr', value: 60 },
+    { label: '2 hr', value: 120 },
   ];
 
   return (
@@ -222,7 +240,7 @@ function AddPlanModal({
           {hasTime && (
             <>
               <Text style={styles.sectionLabel}>REMINDER</Text>
-              <View style={styles.reminderRow}>
+              <View style={[styles.reminderRow, !notifPermission && { opacity: 0.4 }]}>
                 {REMINDER_OPTIONS.map((opt) => (
                   <TouchableOpacity
                     key={String(opt.value)}
@@ -230,7 +248,20 @@ function AddPlanModal({
                       styles.reminderChip,
                       reminderMinutes === opt.value && styles.reminderChipActive,
                     ]}
-                    onPress={() => setReminderMinutes(opt.value)}
+                    onPress={() => {
+                      if (!notifPermission) {
+                        Alert.alert(
+                          'Notifications disabled',
+                          'Enable notifications in your device settings to use reminders.',
+                          [
+                            { text: 'Cancel', style: 'cancel' },
+                            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                          ],
+                        );
+                        return;
+                      }
+                      setReminderMinutes(opt.value);
+                    }}
                   >
                     <Text
                       style={[
@@ -243,6 +274,11 @@ function AddPlanModal({
                   </TouchableOpacity>
                 ))}
               </View>
+              {!notifPermission && (
+                <Text style={styles.reminderHint}>
+                  🔕 Notifications are disabled. Enable them in Settings to use reminders.
+                </Text>
+              )}
             </>
           )}
 
@@ -617,6 +653,12 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   reminderChipActive: { borderColor: colors.accent, backgroundColor: colors.accentLight },
   reminderChipText: { ...typography.bodySmall, color: colors.textSecondary },
   reminderChipTextActive: { color: colors.accent, fontWeight: '600' },
+  reminderHint: {
+    ...typography.bodySmall,
+    color: colors.error,
+    marginTop: spacing.sm,
+    lineHeight: 18,
+  },
   // Repeat
   repeatRow: { flexDirection: 'row', gap: spacing.sm },
   repeatChip: {
@@ -630,7 +672,7 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   repeatChipActive: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   repeatChipText: { ...typography.bodySmall, color: colors.textSecondary },
   repeatChipTextActive: { color: colors.primary, fontWeight: '600' },
-  dayRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm, flexWrap: 'wrap', justifyContent: 'center' },
+  dayRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm, flexWrap: 'wrap', justifyContent: 'center', width: '100%' },
   dayChip: {
     width: 40,
     height: 40,
