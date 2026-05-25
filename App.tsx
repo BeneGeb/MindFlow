@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/native';
-import { View } from 'react-native';
+import { View, Alert, Linking } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -20,8 +20,21 @@ function AppContent() {
     hydrateHabits();
     hydrateTracking();
     hydratePlanner();
-    // Request notification permissions once on startup
-    requestPermissions().catch(() => {/* ignore */});
+    // Request notification permissions once on startup; inform user if denied
+    requestPermissions()
+      .then((granted) => {
+        if (!granted) {
+          Alert.alert(
+            'Notifications disabled',
+            'MindFlow can send you reminders for your habits. Enable notifications in your device settings.',
+            [
+              { text: 'Not now', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ],
+          );
+        }
+      })
+      .catch(() => {/* ignore */});
   }, []);
 
   const navTheme = isDark
