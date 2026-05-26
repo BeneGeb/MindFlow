@@ -8,7 +8,7 @@ import { useHabitStore } from './src/store/habitStore';
 import { useTrackingStore } from './src/store/trackingStore';
 import { usePlannerStore } from './src/store/plannerStore';
 import { ThemeProvider, useTheme } from './src/utils/ThemeContext';
-import { requestPermissions } from './src/utils/notificationService';
+import { requestPermissions, isExpoGo } from './src/utils/notificationService';
 
 function AppContent() {
   const hydrateHabits = useHabitStore((s) => s.hydrate);
@@ -19,22 +19,30 @@ function AppContent() {
   useEffect(() => {
     hydrateHabits();
     hydrateTracking();
-    hydratePlanner();
-    // Request notification permissions once on startup; inform user if denied
-    requestPermissions()
-      .then((granted) => {
-        if (!granted) {
-          Alert.alert(
-            'Notifications disabled',
-            'MindFlow can send you reminders for your habits. Enable notifications in your device settings.',
-            [
-              { text: 'Not now', style: 'cancel' },
-              { text: 'Open Settings', onPress: () => Linking.openSettings() },
-            ],
-          );
-        }
-      })
-      .catch(() => {/* ignore */});
+    // After planner data is loaded, refill the 7-day notification window
+    hydratePlanner().then(() => {
+      if (!isExpoGo) {
+        usePlannerStore.getState().rescheduleAll().catch(() => {/* ignore */});
+      }
+    });
+
+    // Request notification permissions once on startup (not in Expo Go – crashes SDK 53+)
+    if (!isExpoGo) {
+      requestPermissions()
+        .then((granted) => {
+          if (!granted) {
+            Alert.alert(
+              'Notifications disabled',
+              'MindFlow can send you reminders for your habits. Enable notifications in your device settings.',
+              [
+                { text: 'Not now', style: 'cancel' },
+                { text: 'Open Settings', onPress: () => Linking.openSettings() },
+              ],
+            );
+          }
+        })
+        .catch(() => {/* ignore */});
+    }
   }, []);
 
   const navTheme = isDark

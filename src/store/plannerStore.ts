@@ -13,6 +13,9 @@ interface PlannerStore {
   updatePlanned: (id: string, changes: Partial<Omit<PlannedHabit, 'id'>>) => Promise<void>;
   removePlanned: (id: string) => Promise<void>;
   getForDate: (date: string) => PlannedHabit[];
+  /** Re-schedules notifications for all entries that have a reminder configured.
+   *  Called on each app start to keep the 7-day notification window filled. */
+  rescheduleAll: () => Promise<void>;
 }
 
 const generateId = () => Math.random().toString(36).slice(2, 10);
@@ -111,4 +114,34 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
 
   getForDate: (date: string) =>
     get().planned.filter((e) => isActiveOnDate(e, date)),
+
+  rescheduleAll: async () => {
+    const entries = get().planned;
+    const updated: PlannedHabit[] = [];
+
+    for (const entry of entries) {
+      // Skip entries without a reminder
+      if (!entry.time || entry.reminderMinutes === null) {
+        updated.push(entry);
+        continue;
+      }
+
+      // Cancel existing notification IDs
+      if (entry.notificationIds?.length) {
+        try { await cancelReminders(entry.notificationIds); } catch (_) { /* ignore */ }
+      }
+
+      // Re-schedule for the next window (MAX_DAYS = 7)
+      const { name, icon } = getHabitMeta(entry.habitId);
+      let newIds: string[] = [];
+      try {
+        newIds = await scheduleHabitReminder(entry, name, icon);
+      } catch (_) { /* ignore */ }
+
+      updated.push({ ...entry, notificationIds: newIds });
+    }
+
+    set({ planned: updated });
+    await storage.set(STORAGE_KEYS.PLANNER, updated);
+  },
 }));

@@ -140,4 +140,19 @@ const makeMarkdownStyles = (colors: ColorTheme) => ({
     borderRadius: 4,
     paddingHorizontal: 4,
   },
+  fence: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    color: colors.textPrimary,
+  },
+  code_block: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    color: colors.textPrimary,
+  },
+  link: { color: colors.primary },
 });

@@ -50,6 +50,7 @@ npx expo start --ios
 | Markdown rendering | react-native-markdown-display | ^7.0.2 |
 | Haptics | expo-haptics | ~15.0.8 |
 | Animations | React Native built-in `Animated` API | (built-in) |
+| Constants / env detection | expo-constants | ~17.0.3 |
 
 ### Deliberately excluded
 - `react-native-reanimated` — removed due to JSI/HostObject incompatibility with RN 0.81.5 + old arch. Use built-in `Animated` instead.
