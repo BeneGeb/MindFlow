@@ -25,6 +25,7 @@ import {
 } from '../utils/dateHelpers';
 import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
 import { useTheme } from '../utils/ThemeContext';
+import { requestPermissions } from '../utils/notificationService';
 
 const WEEK_DAYS = [
   { label: 'Sun', value: 0 },
@@ -60,16 +61,19 @@ function AddPlanModal({
   const [repeatDays, setRepeatDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [reminderMinutes, setReminderMinutes] = useState<number | null>(null);
   const [notifPermission, setNotifPermission] = useState<boolean>(true);
+  const [notifStatus, setNotifStatus] = useState<'granted' | 'denied' | 'undetermined'>('undetermined');
 
-  // Check notification permission whenever the modal opens
+  // Check notification permission status whenever the modal opens
   useEffect(() => {
     if (visible) {
       Notifications.getPermissionsAsync()
         .then((result) => {
-          const granted = (result as any).granted ?? (result as any).status === 'granted';
+          const status = ((result as any).status ?? 'undetermined') as 'granted' | 'denied' | 'undetermined';
+          const granted = status === 'granted' || !!(result as any).granted;
           setNotifPermission(granted);
+          setNotifStatus(granted ? 'granted' : status);
         })
-        .catch(() => setNotifPermission(false));
+        .catch(() => { setNotifPermission(false); setNotifStatus('denied'); });
     }
   }, [visible]);
 
@@ -250,14 +254,24 @@ function AddPlanModal({
                     ]}
                     onPress={() => {
                       if (!notifPermission) {
-                        Alert.alert(
-                          'Notifications disabled',
-                          'Enable notifications in your device settings to use reminders.',
-                          [
-                            { text: 'Cancel', style: 'cancel' },
-                            { text: 'Open Settings', onPress: () => Linking.openSettings() },
-                          ],
-                        );
+                        if (notifStatus === 'undetermined') {
+                          // Permissions not yet requested – ask the user now
+                          requestPermissions().then((granted) => {
+                            setNotifPermission(granted);
+                            setNotifStatus(granted ? 'granted' : 'denied');
+                            if (granted) setReminderMinutes(opt.value);
+                          }).catch(() => {});
+                        } else {
+                          // Permissions were explicitly denied – guide to Settings
+                          Alert.alert(
+                            'Notifications disabled',
+                            'Enable notifications in your device settings to use reminders.',
+                            [
+                              { text: 'Cancel', style: 'cancel' },
+                              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                            ],
+                          );
+                        }
                         return;
                       }
                       setReminderMinutes(opt.value);
@@ -672,11 +686,18 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   repeatChipActive: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   repeatChipText: { ...typography.bodySmall, color: colors.textSecondary },
   repeatChipTextActive: { color: colors.primary, fontWeight: '600' },
-  dayRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm, flexWrap: 'wrap', justifyContent: 'center', width: '100%' },
+  dayRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: spacing.sm,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignSelf: 'center',  // fixes left-alignment on narrow screens (e.g. iPhone SE)
+  },
   dayChip: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,            // reduced from 40 so 7 chips fit on iPhone SE (288 px usable)
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1.5,
     borderColor: colors.border,
     alignItems: 'center',

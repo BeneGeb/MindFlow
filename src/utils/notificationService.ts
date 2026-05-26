@@ -1,17 +1,30 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { PlannedHabit } from '../types';
 
-// Configure how notifications appear when the app is in the foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+/**
+ * True when the app is running inside Expo Go (storeClient).
+ * expo-notifications Android push support was removed from Expo Go in SDK 53+,
+ * so all notification calls must be guarded by this flag.
+ */
+export const isExpoGo = Constants.executionEnvironment === 'storeClient';
+
+// Configure how notifications appear when the app is in the foreground.
+// Guarded against Expo Go crash (push notifications removed from Expo Go SDK 53+).
+if (!isExpoGo) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+} else {
+  console.warn('[MindFlow] Notifications not available in Expo Go. Use a development build.');
+}
 
 /**
  * Request notification permissions from the user (iOS shows a dialog, Android grants automatically on API <33).
@@ -89,9 +102,10 @@ export async function scheduleHabitReminder(
     activeDays.push(...entry.repeatDays);
   }
 
-  // Schedule for each active day of the week for the next 28 days
-  // Expo allows max 64 notifications; limit to 28 days per habit
-  const MAX_DAYS = 28;
+  // Schedule for each active day of the week for the next 7 days.
+  // Expo allows max 64 notifications; 8 habits × 7 days = up to 56 < 64 limit.
+  // rescheduleAll() in plannerStore is called on each app start to refill the window.
+  const MAX_DAYS = 7;
   for (let dayOffset = 0; dayOffset < MAX_DAYS; dayOffset++) {
     const date = new Date(today);
     date.setDate(today.getDate() + dayOffset);
