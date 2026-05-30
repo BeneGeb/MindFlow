@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/native';
-import { View, Alert, Linking } from 'react-native';
+import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -8,7 +8,6 @@ import { useHabitStore } from './src/store/habitStore';
 import { useTrackingStore } from './src/store/trackingStore';
 import { usePlannerStore } from './src/store/plannerStore';
 import { ThemeProvider, useTheme } from './src/utils/ThemeContext';
-import { requestPermissions, isExpoGo } from './src/utils/notificationService';
 
 function AppContent() {
   const hydrateHabits = useHabitStore((s) => s.hydrate);
@@ -20,29 +19,7 @@ function AppContent() {
     hydrateHabits();
     hydrateTracking();
     // After planner data is loaded, refill the 7-day notification window
-    hydratePlanner().then(() => {
-      if (!isExpoGo) {
-        usePlannerStore.getState().rescheduleAll().catch(() => {/* ignore */});
-      }
-    });
-
-    // Request notification permissions once on startup (not in Expo Go – crashes SDK 53+)
-    if (!isExpoGo) {
-      requestPermissions()
-        .then((granted) => {
-          if (!granted) {
-            Alert.alert(
-              'Notifications disabled',
-              'MindFlow can send you reminders for your habits. Enable notifications in your device settings.',
-              [
-                { text: 'Not now', style: 'cancel' },
-                { text: 'Open Settings', onPress: () => Linking.openSettings() },
-              ],
-            );
-          }
-        })
-        .catch(() => {/* ignore */});
-    }
+    hydratePlanner();
   }, []);
 
   const navTheme = isDark

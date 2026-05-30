@@ -8,7 +8,6 @@ import { useTheme } from '../utils/ThemeContext';
 import HomeScreen from '../screens/HomeScreen';
 import PlannerScreen from '../screens/PlannerScreen';
 import StatsScreen from '../screens/StatsScreen';
-import LibraryScreen from '../screens/LibraryScreen';
 import HabitDetailScreen from '../screens/HabitDetailScreen';
 import LibraryArticleScreen from '../screens/LibraryArticleScreen';
 import StatsDetailScreen from '../screens/StatsDetailScreen';
@@ -26,7 +25,6 @@ export type MainTabParamList = {
   Home: undefined;
   Planner: undefined;
   Stats: undefined;
-  Library: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -36,7 +34,6 @@ const TAB_ICONS: Record<string, string> = {
   Home: '🏠',
   Planner: '📅',
   Stats: '📊',
-  Library: '📚',
 };
 
 function MainTabs() {
@@ -66,7 +63,6 @@ function MainTabs() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Planner" component={PlannerScreen} />
       <Tab.Screen name="Stats" component={StatsScreen} />
-      <Tab.Screen name="Library" component={LibraryScreen} />
     </Tab.Navigator>
   );
 }

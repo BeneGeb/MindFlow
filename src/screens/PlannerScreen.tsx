@@ -7,10 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   Platform,
-  Alert,
-  Linking,
 } from 'react-native';
-import * as Notifications from 'expo-notifications';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePlannerStore } from '../store/plannerStore';
@@ -25,8 +22,6 @@ import {
 } from '../utils/dateHelpers';
 import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
 import { useTheme } from '../utils/ThemeContext';
-import { requestPermissions } from '../utils/notificationService';
-
 const WEEK_DAYS = [
   { label: 'Sun', value: 0 },
   { label: 'Mon', value: 1 },
@@ -59,24 +54,6 @@ function AddPlanModal({
   const [showPicker, setShowPicker] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('daily');
   const [repeatDays, setRepeatDays] = useState<number[]>([1, 2, 3, 4, 5]);
-  const [reminderMinutes, setReminderMinutes] = useState<number | null>(null);
-  const [notifPermission, setNotifPermission] = useState<boolean>(true);
-  const [notifStatus, setNotifStatus] = useState<'granted' | 'denied' | 'undetermined'>('undetermined');
-
-  // Check notification permission status whenever the modal opens
-  useEffect(() => {
-    if (visible) {
-      Notifications.getPermissionsAsync()
-        .then((result) => {
-          const status = ((result as any).status ?? 'undetermined') as 'granted' | 'denied' | 'undetermined';
-          const granted = status === 'granted' || !!(result as any).granted;
-          setNotifPermission(granted);
-          setNotifStatus(granted ? 'granted' : status);
-        })
-        .catch(() => { setNotifPermission(false); setNotifStatus('denied'); });
-    }
-  }, [visible]);
-
   useEffect(() => {
     if (visible) {
       setShowPicker(false);
@@ -93,14 +70,12 @@ function AddPlanModal({
         }
         setRepeatMode(editEntry.repeatMode);
         setRepeatDays(editEntry.repeatDays);
-        setReminderMinutes(editEntry.reminderMinutes ?? null);
       } else {
         setSelectedHabitId(PRESET_HABITS[0].id);
         setHasTime(false);
         setTimeDate(new Date());
         setRepeatMode('daily');
         setRepeatDays([1, 2, 3, 4, 5]);
-        setReminderMinutes(null);
       }
     }
   }, [visible, editEntry]);
@@ -125,7 +100,6 @@ function AddPlanModal({
         time: savedTime,
         repeatMode,
         repeatDays: repeatMode === 'weekly' ? repeatDays : [],
-        reminderMinutes: hasTime ? reminderMinutes : null,
       });
     } else {
       addPlanned({
@@ -134,21 +108,10 @@ function AddPlanModal({
         repeatMode,
         repeatDays: repeatMode === 'weekly' ? repeatDays : [],
         date: null,
-        reminderMinutes: hasTime ? reminderMinutes : null,
       });
     }
     onClose();
   };
-
-  const REMINDER_OPTIONS: { label: string; value: number | null }[] = [
-    { label: 'None', value: null },
-    { label: '5 min', value: 5 },
-    { label: '10 min', value: 10 },
-    { label: '15 min', value: 15 },
-    { label: '30 min', value: 30 },
-    { label: '1 hr', value: 60 },
-    { label: '2 hr', value: 120 },
-  ];
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
@@ -236,62 +199,6 @@ function AddPlanModal({
                 >
                   <Text style={styles.pickerDoneText}>Done</Text>
                 </TouchableOpacity>
-              )}
-            </>
-          )}
-
-          {/* Reminder — only visible when a time is set */}
-          {hasTime && (
-            <>
-              <Text style={styles.sectionLabel}>REMINDER</Text>
-              <View style={[styles.reminderRow, !notifPermission && { opacity: 0.4 }]}>
-                {REMINDER_OPTIONS.map((opt) => (
-                  <TouchableOpacity
-                    key={String(opt.value)}
-                    style={[
-                      styles.reminderChip,
-                      reminderMinutes === opt.value && styles.reminderChipActive,
-                    ]}
-                    onPress={() => {
-                      if (!notifPermission) {
-                        if (notifStatus === 'undetermined') {
-                          // Permissions not yet requested – ask the user now
-                          requestPermissions().then((granted) => {
-                            setNotifPermission(granted);
-                            setNotifStatus(granted ? 'granted' : 'denied');
-                            if (granted) setReminderMinutes(opt.value);
-                          }).catch(() => {});
-                        } else {
-                          // Permissions were explicitly denied – guide to Settings
-                          Alert.alert(
-                            'Notifications disabled',
-                            'Enable notifications in your device settings to use reminders.',
-                            [
-                              { text: 'Cancel', style: 'cancel' },
-                              { text: 'Open Settings', onPress: () => Linking.openSettings() },
-                            ],
-                          );
-                        }
-                        return;
-                      }
-                      setReminderMinutes(opt.value);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.reminderChipText,
-                        reminderMinutes === opt.value && styles.reminderChipTextActive,
-                      ]}
-                    >
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              {!notifPermission && (
-                <Text style={styles.reminderHint}>
-                  🔕 Notifications are disabled. Enable them in Settings to use reminders.
-                </Text>
               )}
             </>
           )}
@@ -648,30 +555,6 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
     ...typography.body,
     color: colors.primary,
     fontWeight: '700',
-  },
-  // Reminder
-  reminderRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    flexWrap: 'wrap',
-  },
-  reminderChip: {
-    flex: 1,
-    minWidth: 56,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  reminderChipActive: { borderColor: colors.accent, backgroundColor: colors.accentLight },
-  reminderChipText: { ...typography.bodySmall, color: colors.textSecondary },
-  reminderChipTextActive: { color: colors.accent, fontWeight: '600' },
-  reminderHint: {
-    ...typography.bodySmall,
-    color: colors.error,
-    marginTop: spacing.sm,
-    lineHeight: 18,
   },
   // Repeat
   repeatRow: { flexDirection: 'row', gap: spacing.sm },
