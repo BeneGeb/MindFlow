@@ -3,11 +3,24 @@ import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/
 import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Notifications from 'expo-notifications';
 import AppNavigator from './src/navigation/AppNavigator';
 import { useHabitStore } from './src/store/habitStore';
 import { useTrackingStore } from './src/store/trackingStore';
 import { usePlannerStore } from './src/store/plannerStore';
 import { ThemeProvider, useTheme } from './src/utils/ThemeContext';
+import { requestPermissions } from './src/utils/notificationService';
+
+// Show notifications when app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 function AppContent() {
   const hydrateHabits = useHabitStore((s) => s.hydrate);
@@ -18,8 +31,8 @@ function AppContent() {
   useEffect(() => {
     hydrateHabits();
     hydrateTracking();
-    // After planner data is loaded, refill the 7-day notification window
     hydratePlanner();
+    requestPermissions();
   }, []);
 
   const navTheme = isDark

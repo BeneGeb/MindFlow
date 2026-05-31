@@ -29,7 +29,8 @@
     "plugins": [
       "expo-asset",
       "@react-native-community/datetimepicker",
-["./plugins/withAndroidPrimaryColor", { "color": "#7F77DD" }]
+      ["expo-notifications", { "color": "#7F77DD" }],
+      ["./plugins/withAndroidPrimaryColor", { "color": "#7F77DD" }]
     ]
   }
 }

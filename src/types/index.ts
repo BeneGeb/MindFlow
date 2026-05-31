@@ -29,6 +29,8 @@ export interface PlannedHabit {
   repeatMode: RepeatMode;
   repeatDays: number[]; // 0=Sun … 6=Sat, used when repeatMode === 'weekly'
   date: string | null; // ISO date string, used when repeatMode === 'once'
+  notificationEnabled: boolean;
+  notificationTime: string | null; // "HH:MM", independent of habit time
 }
 
 // date string "YYYY-MM-DD" → habitId → completed

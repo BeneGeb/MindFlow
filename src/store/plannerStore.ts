@@ -7,7 +7,7 @@ interface PlannerStore {
   planned: PlannedHabit[];
   hydrated: boolean;
   hydrate: () => Promise<void>;
-  addPlanned: (entry: Omit<PlannedHabit, 'id'>) => Promise<void>;
+  addPlanned: (entry: Omit<PlannedHabit, 'id'>) => Promise<PlannedHabit>;
   updatePlanned: (id: string, changes: Partial<Omit<PlannedHabit, 'id'>>) => Promise<void>;
   removePlanned: (id: string) => Promise<void>;
   getForDate: (date: string) => PlannedHabit[];
@@ -36,6 +36,7 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
     const next = [...get().planned, newEntry];
     set({ planned: next });
     await storage.set(STORAGE_KEYS.PLANNER, next);
+    return newEntry;
   },
 
   updatePlanned: async (id, changes) => {

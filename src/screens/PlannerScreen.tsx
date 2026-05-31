@@ -24,6 +24,7 @@ import {
 } from '../utils/dateHelpers';
 import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
 import { useTheme } from '../utils/ThemeContext';
+import { syncReminder, removeReminder } from '../utils/notificationService';
 
 const WEEK_DAYS = [
   { label: 'Sun', value: 0 },
@@ -70,6 +71,11 @@ function AddPlanModal({
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('daily');
   const [repeatDays, setRepeatDays] = useState<number[]>([1, 2, 3, 4, 5]);
 
+  // Notification state
+  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [notifTimeDate, setNotifTimeDate] = useState(() => new Date());
+  const [showNotifPicker, setShowNotifPicker] = useState(false);
+
   // Inline habit form state
   const [inlineMode, setInlineMode] = useState<'none' | 'create' | 'edit'>('none');
   const [inlineHabitId, setInlineHabitId] = useState<string | null>(null);
@@ -80,6 +86,7 @@ function AddPlanModal({
   useEffect(() => {
     if (visible) {
       setShowPicker(false);
+      setShowNotifPicker(false);
       setInlineMode('none');
       if (editEntry) {
         setSelectedHabitId(editEntry.habitId);
@@ -94,21 +101,45 @@ function AddPlanModal({
         }
         setRepeatMode(editEntry.repeatMode);
         setRepeatDays(editEntry.repeatDays);
+        setNotifEnabled(editEntry.notificationEnabled ?? false);
+        if (editEntry.notificationTime) {
+          const [h, m] = editEntry.notificationTime.split(':').map(Number);
+          const d = new Date();
+          d.setHours(h, m, 0, 0);
+          setNotifTimeDate(d);
+        } else {
+          setNotifTimeDate(new Date());
+        }
       } else {
         setSelectedHabitId(PRESET_HABITS[0].id);
         setHasTime(false);
         setTimeDate(new Date());
         setRepeatMode('daily');
         setRepeatDays([1, 2, 3, 4, 5]);
+        setNotifEnabled(false);
+        setNotifTimeDate(new Date());
       }
     }
   }, [visible, editEntry]);
 
   const timeString = `${String(timeDate.getHours()).padStart(2, '0')}:${String(timeDate.getMinutes()).padStart(2, '0')}`;
+  const notifTimeString = `${String(notifTimeDate.getHours()).padStart(2, '0')}:${String(notifTimeDate.getMinutes()).padStart(2, '0')}`;
 
   const handleTimeChange = (event: DateTimePickerEvent, date?: Date) => {
     if (Platform.OS === 'android') setShowPicker(false);
-    if (event.type === 'set' && date) setTimeDate(date);
+    if (event.type === 'set' && date) {
+      setTimeDate(date);
+      if (notifEnabled) {
+        const d = new Date(date);
+        d.setMinutes(d.getMinutes() - 15);
+        setNotifTimeDate(d);
+      }
+    }
+  };
+
+  const handleNotifTimeChange = (event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') setShowNotifPicker(false);
+    if (event.type === 'set' && date) setNotifTimeDate(date);
   };
 
   const toggleDay = (day: number) => {
@@ -117,22 +148,38 @@ function AddPlanModal({
     );
   };
 
-  const handleSavePlan = () => {
+  const handleSavePlan = async () => {
     const savedTime = hasTime ? timeString : null;
+    const savedNotifTime = notifEnabled ? notifTimeString : null;
+    const habit = allHabits.find((h) => h.id === selectedHabitId);
+
     if (editEntry) {
-      updatePlanned(editEntry.id, {
+      const updatedRepeatDays = repeatMode === 'weekly' ? repeatDays : [];
+      const changes = {
         time: savedTime,
         repeatMode,
-        repeatDays: repeatMode === 'weekly' ? repeatDays : [],
-      });
+        repeatDays: updatedRepeatDays,
+        notificationEnabled: notifEnabled,
+        notificationTime: savedNotifTime,
+      };
+      await updatePlanned(editEntry.id, changes);
+      const updatedEntry = { ...editEntry, ...changes };
+      if (notifEnabled && habit) {
+        await syncReminder(updatedEntry, habit.name, habit.icon);
+      } else {
+        await removeReminder(editEntry.id);
+      }
     } else {
-      addPlanned({
+      const newEntry = await addPlanned({
         habitId: selectedHabitId,
         time: savedTime,
         repeatMode,
         repeatDays: repeatMode === 'weekly' ? repeatDays : [],
         date: null,
+        notificationEnabled: notifEnabled,
+        notificationTime: savedNotifTime,
       });
+      if (notifEnabled && habit) await syncReminder(newEntry, habit.name, habit.icon);
     }
     onClose();
   };
@@ -331,7 +378,11 @@ function AddPlanModal({
               <View style={styles.repeatRow}>
                 <TouchableOpacity
                   style={[styles.repeatChip, !hasTime && styles.repeatChipActive]}
-                  onPress={() => { setHasTime(false); setShowPicker(false); }}
+                  onPress={() => {
+                    setHasTime(false);
+                    setShowPicker(false);
+                    setNotifEnabled(false);
+                  }}
                 >
                   <Text style={[styles.repeatChipText, !hasTime && styles.repeatChipTextActive]}>
                     Any time
@@ -339,7 +390,15 @@ function AddPlanModal({
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.repeatChip, hasTime && styles.repeatChipActive]}
-                  onPress={() => setHasTime(true)}
+                  onPress={() => {
+                    setHasTime(true);
+                    if (!notifEnabled) {
+                      const d = new Date(timeDate);
+                      d.setMinutes(d.getMinutes() - 15);
+                      setNotifTimeDate(d);
+                      setNotifEnabled(true);
+                    }
+                  }}
                 >
                   <Text style={[styles.repeatChipText, hasTime && styles.repeatChipTextActive]}>
                     Set time
@@ -406,6 +465,62 @@ function AddPlanModal({
                   ))}
                 </View>
               )}
+
+              {/* Notification */}
+              <Text style={styles.sectionLabel}>NOTIFICATION</Text>
+              <View style={styles.repeatRow}>
+                <TouchableOpacity
+                  style={[styles.repeatChip, !notifEnabled && styles.repeatChipActive]}
+                  onPress={() => { setNotifEnabled(false); setShowNotifPicker(false); }}
+                >
+                  <Text style={[styles.repeatChipText, !notifEnabled && styles.repeatChipTextActive]}>
+                    Off
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.repeatChip, notifEnabled && styles.repeatChipActive]}
+                  onPress={() => {
+                    if (!notifEnabled) {
+                      const d = new Date(timeDate);
+                      d.setMinutes(d.getMinutes() - 15);
+                      setNotifTimeDate(d);
+                    }
+                    setNotifEnabled(true);
+                  }}
+                >
+                  <Text style={[styles.repeatChipText, notifEnabled && styles.repeatChipTextActive]}>
+                    On
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {notifEnabled && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.timeDisplay, { marginTop: spacing.sm }]}
+                    onPress={() => setShowNotifPicker(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.timeDisplayText}>{formatTime(notifTimeString)}</Text>
+                  </TouchableOpacity>
+                  {showNotifPicker && (
+                    <DateTimePicker
+                      value={notifTimeDate}
+                      mode="time"
+                      is24Hour={true}
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={handleNotifTimeChange}
+                    />
+                  )}
+                  {Platform.OS === 'ios' && showNotifPicker && (
+                    <TouchableOpacity
+                      style={styles.pickerDoneBtn}
+                      onPress={() => setShowNotifPicker(false)}
+                    >
+                      <Text style={styles.pickerDoneText}>Done</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
             </>
           )}
         </ScrollView>
@@ -452,7 +567,10 @@ function PlannerEntry({
           <Text style={styles.entryName}>{habit.name}</Text>
           <Text style={styles.entryMeta}>{repeatLabel}</Text>
         </View>
-        <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
+        <TouchableOpacity
+          onPress={() => { removeReminder(entry.id); onDelete(); }}
+          style={styles.deleteBtn}
+        >
           <Text style={styles.deleteIcon}>✕</Text>
         </TouchableOpacity>
       </TouchableOpacity>
