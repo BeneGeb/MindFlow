@@ -249,20 +249,22 @@ function AddPlanModal({
   const isInline = inlineMode !== 'none';
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={() => {
+        if (isInline) setInlineMode('none');
+        else onClose();
+      }}
+    >
       <SafeAreaView style={styles.modalSafe}>
 
         {/* Header */}
         <View style={styles.modalHeader}>
-          {isInline ? (
-            <TouchableOpacity onPress={() => setInlineMode('none')}>
-              <Text style={styles.modalCancel}>← Back</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity onPress={onClose}>
-              <Text style={styles.modalCancel}>Cancel</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={isInline ? () => setInlineMode('none') : onClose}>
+            <Text style={styles.modalBack}>‹ Back</Text>
+          </TouchableOpacity>
           <Text style={styles.modalTitle}>
             {isInline
               ? inlineMode === 'create' ? 'New Habit' : 'Edit Habit'
@@ -755,7 +757,7 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
     backgroundColor: colors.surface,
   },
   modalTitle: { ...typography.h3, color: colors.textPrimary },
-  modalCancel: { ...typography.body, color: colors.textSecondary },
+  modalBack: { ...typography.body, color: colors.primary, fontWeight: '600', fontSize: 17 },
   modalSave: { ...typography.body, color: colors.primary, fontWeight: '700' },
   modalContent: { padding: spacing.md, paddingBottom: spacing.xxl },
   sectionLabel: {
