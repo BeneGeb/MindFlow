@@ -25,3 +25,5 @@ Regular meditation lowers cortisol (your stress hormone), strengthens the prefro
 ## 2-Minute Version
 
 Sit still, close your eyes, take 3 deep breaths. That's it. On tough days, this counts.
+
+*Use this version when you're just getting started. Once the habit feels natural, gradually increase the time.*

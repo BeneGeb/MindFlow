@@ -41,3 +41,5 @@ Best for: immediate stress relief
 ## 2-Minute Version
 
 Take 3 deep belly breaths right now. Inhale so your stomach expands, not your chest. Exhale fully. That's it — and it works.
+
+*Use this version when you're just getting started. Once the habit feels natural, gradually increase the time.*

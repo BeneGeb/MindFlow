@@ -82,6 +82,7 @@ function AddPlanModal({
   const [inlineEmoji, setInlineEmoji] = useState('✨');
   const [inlineName, setInlineName] = useState('');
   const [inlineColor, setInlineColor] = useState(COLOR_OPTIONS[0]);
+  const [inlineDescription, setInlineDescription] = useState('');
 
   useEffect(() => {
     if (visible) {
@@ -188,6 +189,7 @@ function AddPlanModal({
     setInlineEmoji('✨');
     setInlineName('');
     setInlineColor(COLOR_OPTIONS[0]);
+    setInlineDescription('');
     setInlineHabitId(null);
     setInlineMode('create');
   };
@@ -198,6 +200,7 @@ function AddPlanModal({
     setInlineEmoji(habit.icon);
     setInlineName(habit.name);
     setInlineColor(habit.color);
+    setInlineDescription(habit.description ?? '');
     setInlineHabitId(habitId);
     setInlineMode('edit');
   };
@@ -209,7 +212,7 @@ function AddPlanModal({
         name: inlineName.trim(),
         icon: inlineEmoji || '✨',
         color: inlineColor,
-        description: undefined,
+        description: inlineDescription.trim() || undefined,
       });
       setSelectedHabitId(newHabit.id);
     } else if (inlineMode === 'edit' && inlineHabitId) {
@@ -217,7 +220,7 @@ function AddPlanModal({
         name: inlineName.trim(),
         icon: inlineEmoji || '✨',
         color: inlineColor,
-        description: undefined,
+        description: inlineDescription.trim() || undefined,
       });
       setSelectedHabitId(inlineHabitId);
     }
@@ -323,6 +326,17 @@ function AddPlanModal({
                   />
                 ))}
               </View>
+
+              <Text style={styles.sectionLabel}>DESCRIPTION</Text>
+              <TextInput
+                style={styles.descriptionInput}
+                value={inlineDescription}
+                onChangeText={setInlineDescription}
+                placeholder="What is this habit and why does it help?"
+                placeholderTextColor={colors.textMuted}
+                multiline
+                textAlignVertical="top"
+              />
 
               {inlineMode === 'edit' && (
                 <TouchableOpacity style={styles.deleteHabitBtn} onPress={deleteInlineHabit}>
@@ -793,6 +807,13 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
     alignItems: 'center', marginTop: spacing.xl,
   },
   deleteHabitText: { ...typography.body, color: '#E05C5C', fontWeight: '600' },
+  descriptionInput: {
+    backgroundColor: colors.surface, borderRadius: radius.md,
+    padding: spacing.md, ...typography.body,
+    color: colors.textPrimary, minHeight: 100,
+    ...shadow.sm, textAlignVertical: 'top',
+  },
+  optionalLabel: { ...typography.bodySmall, color: colors.textMuted, fontWeight: '400' },
   // Time picker
   timeDisplay: {
     backgroundColor: colors.surface, borderRadius: radius.md,
