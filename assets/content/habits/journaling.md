@@ -22,5 +22,4 @@ Writing activates the analytical left brain, which calms the emotional right bra
 ## 2-Minute Version
 Write one sentence: what are you feeling right now? That's a journal entry.
 
-## Atomic Habits tip
-Keep your journal on your pillow or next to your coffee maker — making it visible is half the battle. Out of sight means out of habit.
+*Use this version when you're just getting started. Once the habit feels natural, gradually increase the time.*

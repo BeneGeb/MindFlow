@@ -25,3 +25,5 @@ Walking increases serotonin and dopamine, reduces cortisol, and promotes neuroge
 ## 2-Minute Version
 
 Step outside your front door. Walk to the end of the street and back. That's enough.
+
+*Use this version when you're just getting started. Once the habit feels natural, gradually increase the time.*

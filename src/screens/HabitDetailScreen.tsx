@@ -1,20 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
+import Markdown from 'react-native-markdown-display';
 import { useHabitStore } from '../store/habitStore';
 import { useTrackingStore } from '../store/trackingStore';
 import { useStreak } from '../hooks/useStreak';
 import { useHeatmapData } from '../hooks/useCompletionRate';
 import { today } from '../utils/dateHelpers';
+import { loadContent, HABIT_CONTENT_KEY } from '../utils/contentLoader';
 import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
 import { useTheme } from '../utils/ThemeContext';
 import HeatmapGrid from '../components/HeatmapGrid';
@@ -34,6 +37,26 @@ export default function HabitDetailScreen() {
   const toggle = useTrackingStore((s) => s.toggle);
   const streak = useStreak(habitId);
   const heatmap = useHeatmapData(habitId, 28);
+
+  const [content, setContent] = useState('');
+  const [contentLoading, setContentLoading] = useState(true);
+
+  useEffect(() => {
+    if (habit?.isCustom) {
+      setContent(habit.description ?? '');
+      setContentLoading(false);
+      return;
+    }
+    const key = HABIT_CONTENT_KEY[habitId];
+    if (!key) {
+      setContentLoading(false);
+      return;
+    }
+    loadContent(key).then((text) => {
+      setContent(text);
+      setContentLoading(false);
+    });
+  }, [habitId, habit?.isCustom, habit?.description]);
 
   if (!habit) return null;
 
@@ -78,6 +101,18 @@ export default function HabitDetailScreen() {
           <Text style={styles.heatmapLabel}>Last 28 days</Text>
           <HeatmapGrid data={heatmap} color={habit.color} />
         </View>
+
+        {/* Description */}
+        {(contentLoading || content.length > 0) && (
+          <View style={styles.descCard}>
+            <Text style={styles.descTitle}>About this habit</Text>
+            {contentLoading ? (
+              <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />
+            ) : (
+              <Markdown style={makeMarkdownStyles(colors)}>{content}</Markdown>
+            )}
+          </View>
+        )}
 
         {/* Complete today button */}
         <TouchableOpacity
@@ -174,6 +209,18 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: spacing.sm,
   },
+  descCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    ...shadow.sm,
+  },
+  descTitle: {
+    ...typography.label,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
   completeBtn: {
     backgroundColor: colors.primaryLight,
     borderRadius: radius.md,
@@ -189,4 +236,32 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   completeBtnTextDone: {
     color: '#fff',
   },
+});
+
+const makeMarkdownStyles = (colors: ColorTheme) => ({
+  body: { color: colors.textPrimary, fontSize: 15, lineHeight: 24 },
+  heading1: { ...typography.h2, color: colors.textPrimary, marginBottom: spacing.sm, marginTop: spacing.md },
+  heading2: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.xs, marginTop: spacing.md },
+  heading3: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  paragraph: { marginBottom: spacing.md, color: colors.textPrimary },
+  strong: { fontWeight: '700' as const },
+  em: { fontStyle: 'italic' as const, color: colors.primary },
+  bullet_list: { marginBottom: spacing.md },
+  list_item: { marginBottom: spacing.xs },
+  blockquote: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+    paddingLeft: spacing.md,
+    marginVertical: spacing.sm,
+    backgroundColor: colors.primaryLight,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+  },
+  link: { color: colors.primary },
 });

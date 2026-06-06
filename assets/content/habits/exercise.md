@@ -25,3 +25,5 @@ Exercise releases endorphins, serotonin, and BDNF (brain-derived neurotrophic fa
 ## 2-Minute Version
 
 Do 10 push-ups, 10 squats, and 10 jumping jacks. Set a 2-minute timer and move until it goes off.
+
+*Use this version when you're just getting started. Once the habit feels natural, gradually increase the time.*

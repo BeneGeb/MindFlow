@@ -25,3 +25,5 @@ Yoga activates the parasympathetic nervous system (your "rest and digest" mode),
 ## 2-Minute Version
 
 Child's Pose. Kneel, fold forward, arms extended or alongside your body. Breathe slowly for 2 minutes. You'll feel the difference.
+
+*Use this version when you're just getting started. Once the habit feels natural, gradually increase the time.*
