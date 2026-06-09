@@ -154,8 +154,6 @@ export default function StatsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Stats</Text>
-
         <OverallStats habitIds={uniqueHabitIds} />
 
         <StressStats />
@@ -178,11 +176,6 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   content: {
     padding: spacing.md,
     paddingBottom: spacing.xxl,
-  },
-  title: {
-    ...typography.h1,
-    color: colors.textPrimary,
-    marginBottom: spacing.md,
   },
   overallCard: {
     backgroundColor: colors.primary,
