@@ -6,6 +6,8 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import { useStressStore } from '../store/stressStore';
+import { STRESS_LEVELS } from '../components/StressBarometer';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -50,6 +52,54 @@ function HabitStatCard({ entry, habit }: { entry: PlannedHabit; habit: Habit }) 
       </View>
       <View style={styles.heatmapRow}>
         <HeatmapGrid data={heatmap} color={habit.color} />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+function StressStats() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
+  const getHistory = useStressStore((s) => s.getHistory);
+  useStressStore((s) => s.log);
+
+  const history = getHistory(28);
+
+  const levels = history.map((d) => d.level).filter((l): l is 1|2|3|4|5 => l != null);
+  const avg = levels.length > 0
+    ? Math.round(levels.reduce((a, b) => a + b, 0) / levels.length * 10) / 10
+    : null;
+  const avgEntry = avg != null ? STRESS_LEVELS[Math.round(avg) - 1] : null;
+
+  const cellColors = history.map(({ level }) =>
+    level != null ? STRESS_LEVELS[level - 1].color : null
+  );
+
+  return (
+    <TouchableOpacity
+      style={styles.habitCard}
+      onPress={() => navigation.navigate('StressDetail')}
+      activeOpacity={0.7}
+    >
+      <View style={styles.habitCardHeader}>
+        <View style={[styles.habitIcon, { backgroundColor: '#E05C5C22' }]}>
+          <Text style={styles.habitIconText}>🧠</Text>
+        </View>
+        <View style={styles.habitInfo}>
+          <Text style={styles.habitName}>Stress Level</Text>
+          <Text style={styles.habitRate}>
+            {avgEntry && avg != null ? `${avgEntry.emoji} avg. ${avg} / 5 last 28 days` : 'No entries yet'}
+          </Text>
+        </View>
+        {avgEntry && (
+          <View style={styles.streakBadge}>
+            <Text style={styles.streakNum}>{avgEntry.emoji}</Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.heatmapRow}>
+        <HeatmapGrid data={[]} color="" cellColors={cellColors} />
       </View>
     </TouchableOpacity>
   );
@@ -106,24 +156,14 @@ export default function StatsScreen() {
       >
         <Text style={styles.title}>Stats</Text>
 
-        {plannedEntries.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>📊</Text>
-            <Text style={styles.emptyTitle}>No planned habits</Text>
-            <Text style={styles.emptyText}>
-              Add habits in the Planner to track your stats here.
-            </Text>
-          </View>
-        ) : (
-          <>
-            <OverallStats habitIds={uniqueHabitIds} />
+        <OverallStats habitIds={uniqueHabitIds} />
 
-            <Text style={styles.sectionTitle}>Your Habits</Text>
-            {plannedEntries.map(({ entry, habit }) => (
-              <HabitStatCard key={entry.id} entry={entry} habit={habit} />
-            ))}
-          </>
-        )}
+        <StressStats />
+
+        <Text style={styles.sectionTitle}>Your Habits</Text>
+        {plannedEntries.map(({ entry, habit }) => (
+          <HabitStatCard key={entry.id} entry={entry} habit={habit} />
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -214,16 +254,5 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
   streakFire: { fontSize: 18 },
   heatmapRow: {
     marginTop: spacing.xs,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingVertical: spacing.xxl,
-  },
-  emptyIcon: { fontSize: 48, marginBottom: spacing.md },
-  emptyTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
-  emptyText: {
-    ...typography.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
   },
 });

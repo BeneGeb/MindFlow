@@ -31,4 +31,5 @@ export const STORAGE_KEYS = {
   CUSTOM_HABITS: 'mindflow:custom_habits',
   THEME_PREFERENCE: 'mindflow:theme_preference',
   NOTIFICATION_IDS: 'mindflow:notification_ids',
+  STRESS_LOG: 'mindflow:stress_log',
 } as const;

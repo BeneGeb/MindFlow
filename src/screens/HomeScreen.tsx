@@ -17,6 +17,7 @@ import { ColorTheme, spacing, typography, radius } from '../utils/theme';
 import { useTheme, ThemePreference } from '../utils/ThemeContext';
 import HabitCard from '../components/HabitCard';
 import ProgressBar from '../components/ProgressBar';
+import StressBarometer from '../components/StressBarometer';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -180,6 +181,8 @@ export default function HomeScreen() {
             })}
           </View>
         )}
+
+        <StressBarometer colors={colors} />
 
         <ProgressBar completed={completedCount} total={todayHabits.length} />
 
