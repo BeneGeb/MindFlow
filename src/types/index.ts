@@ -36,6 +36,12 @@ export interface PlannedHabit {
 // date string "YYYY-MM-DD" → habitId → completed
 export type TrackingRecord = Record<string, Record<string, boolean>>;
 
+// 1 = very calm … 5 = very stressed
+export type StressLevel = 1 | 2 | 3 | 4 | 5;
+
+// date string "YYYY-MM-DD" → stress level
+export type StressLog = Record<string, StressLevel>;
+
 export interface LibraryArticle {
   id: string;
   title: string;

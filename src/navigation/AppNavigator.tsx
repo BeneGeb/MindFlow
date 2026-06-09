@@ -11,6 +11,7 @@ import StatsScreen from '../screens/StatsScreen';
 import HabitDetailScreen from '../screens/HabitDetailScreen';
 import LibraryArticleScreen from '../screens/LibraryArticleScreen';
 import StatsDetailScreen from '../screens/StatsDetailScreen';
+import StressDetailScreen from '../screens/StressDetailScreen';
 import CreateHabitScreen from '../screens/CreateHabitScreen';
 
 export type RootStackParamList = {
@@ -18,6 +19,7 @@ export type RootStackParamList = {
   HabitDetail: { habitId: string };
   LibraryArticle: { articleId: string };
   StatsDetail: { plannedId: string };
+  StressDetail: undefined;
   CreateHabit: { habitId?: string };
 };
 
@@ -74,6 +76,7 @@ export default function AppNavigator() {
       <Stack.Screen name="HabitDetail" component={HabitDetailScreen} />
       <Stack.Screen name="LibraryArticle" component={LibraryArticleScreen} />
       <Stack.Screen name="StatsDetail" component={StatsDetailScreen} />
+      <Stack.Screen name="StressDetail" component={StressDetailScreen} />
       <Stack.Screen name="CreateHabit" component={CreateHabitScreen} />
     </Stack.Navigator>
   );

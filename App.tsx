@@ -8,6 +8,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { useHabitStore } from './src/store/habitStore';
 import { useTrackingStore } from './src/store/trackingStore';
 import { usePlannerStore } from './src/store/plannerStore';
+import { useStressStore } from './src/store/stressStore';
 import { ThemeProvider, useTheme } from './src/utils/ThemeContext';
 import { requestPermissions } from './src/utils/notificationService';
 
@@ -26,12 +27,14 @@ function AppContent() {
   const hydrateHabits = useHabitStore((s) => s.hydrate);
   const hydrateTracking = useTrackingStore((s) => s.hydrate);
   const hydratePlanner = usePlannerStore((s) => s.hydrate);
+  const hydrateStress = useStressStore((s) => s.hydrate);
   const { colors, isDark } = useTheme();
 
   useEffect(() => {
     hydrateHabits();
     hydrateTracking();
     hydratePlanner();
+    hydrateStress();
     requestPermissions();
   }, []);
 
