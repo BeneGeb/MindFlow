@@ -64,7 +64,7 @@ function StressStats() {
   const getHistory = useStressStore((s) => s.getHistory);
   useStressStore((s) => s.log);
 
-  const history = getHistory(28);
+  const history = getHistory(7);
 
   const levels = history.map((d) => d.level).filter((l): l is 1|2|3|4|5 => l != null);
   const avg = levels.length > 0
@@ -89,7 +89,7 @@ function StressStats() {
         <View style={styles.habitInfo}>
           <Text style={styles.habitName}>Stress Level</Text>
           <Text style={styles.habitRate}>
-            {avgEntry && avg != null ? `${avgEntry.emoji} avg. ${avg} / 5 last 28 days` : 'No entries yet'}
+            {avgEntry && avg != null ? `${avgEntry.emoji} avg. ${avg} / 5 this week` : 'No entries yet'}
           </Text>
         </View>
         {avgEntry && (

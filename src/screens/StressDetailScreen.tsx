@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { STRESS_LEVELS } from '../components/StressBarometer';
 import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
 import { useTheme } from '../utils/ThemeContext';
 import HeatmapGrid from '../components/HeatmapGrid';
+import { getDaysWithOffset, formatDateRange } from '../utils/dateHelpers';
 
 function avg(days: number, getHistory: ReturnType<typeof useStressStore.getState>['getHistory']): number | null {
   const history = getHistory(days);
@@ -35,18 +36,24 @@ export default function StressDetailScreen() {
   const navigation = useNavigation();
   const { colors } = useTheme();
   const styles = makeStyles(colors);
+  const [page, setPage] = useState(0);
   const getHistory = useStressStore((s) => s.getHistory);
-  useStressStore((s) => s.log);
+  const log = useStressStore((s) => s.log);
 
   const avg7 = avg(7, getHistory);
   const avg28 = avg(28, getHistory);
-  const history28 = getHistory(28);
 
-  const totalEntries = history28.filter((d) => d.level != null).length;
+  const totalEntries = Object.values(log).filter((l) => l != null).length;
 
-  const cellColors = history28.map(({ level }) =>
-    level != null ? STRESS_LEVELS[level - 1].color : null
-  );
+  const currentDates = getDaysWithOffset(28, page);
+  const nextDates = getDaysWithOffset(28, page + 1);
+  const hasOlderData = nextDates.some((d) => log[d] != null);
+  const rangeLabel = page === 0 ? 'Last 28 days' : formatDateRange(currentDates);
+
+  const cellColors = currentDates.map((date) => {
+    const level = log[date];
+    return level != null ? STRESS_LEVELS[level - 1].color : null;
+  });
 
   const avgEntry7 = avg7 != null ? STRESS_LEVELS[Math.round(avg7) - 1] : null;
   const avgEntry28 = avg28 != null ? STRESS_LEVELS[Math.round(avg28) - 1] : null;
@@ -82,12 +89,24 @@ export default function StressDetailScreen() {
 
         <View style={[styles.statBox, styles.totalBox]}>
           <Text style={styles.statValue}>{totalEntries}</Text>
-          <Text style={styles.statLabel}>Total entries (28 days)</Text>
+          <Text style={styles.statLabel}>Total entries</Text>
         </View>
 
-        <Text style={styles.heatmapTitle}>Last 28 days</Text>
+        <Text style={styles.heatmapTitle}>{rangeLabel}</Text>
         <View style={styles.heatmapCard}>
           <HeatmapGrid data={[]} color="" cellColors={cellColors} />
+        </View>
+        <View style={styles.pageNav}>
+          {hasOlderData ? (
+            <TouchableOpacity onPress={() => setPage((p) => p + 1)} style={styles.pageBtn}>
+              <Text style={styles.pageBtnText}>← Older</Text>
+            </TouchableOpacity>
+          ) : <View />}
+          {page > 0 && (
+            <TouchableOpacity onPress={() => setPage((p) => p - 1)} style={styles.pageBtn}>
+              <Text style={styles.pageBtnText}>Newer →</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.legend}>
@@ -171,8 +190,22 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.md,
-    marginBottom: spacing.lg,
     ...shadow.sm,
+  },
+  pageNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  pageBtn: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  pageBtnText: {
+    ...typography.bodySmall,
+    color: colors.primary,
+    fontWeight: '600',
   },
   legend: {
     backgroundColor: colors.surface,
