@@ -1,5 +1,5 @@
 import { useTrackingStore } from '../store/trackingStore';
-import { getLastNDays } from '../utils/dateHelpers';
+import { getLastNDays, getDaysWithOffset } from '../utils/dateHelpers';
 import { PlannedHabit } from '../types';
 import { isActiveOnDate } from '../store/plannerStore';
 
@@ -52,6 +52,13 @@ export const useOccurrenceTotalCompletions = (entry: PlannedHabit): number => {
 export const useOccurrenceHeatmapData = (entry: PlannedHabit, days = 7): boolean[] => {
   const occurrences = useTrackingStore((s) => s.occurrences);
   return getLastNDays(days).map(
+    (d) => isActiveOnDate(entry, d) && !!occurrences[d]?.[entry.habitId]?.[entry.id]
+  );
+};
+
+export const useOccurrenceHeatmapDataPaged = (entry: PlannedHabit, days = 28, page = 0): boolean[] => {
+  const occurrences = useTrackingStore((s) => s.occurrences);
+  return getDaysWithOffset(days, page).map(
     (d) => isActiveOnDate(entry, d) && !!occurrences[d]?.[entry.habitId]?.[entry.id]
   );
 };
