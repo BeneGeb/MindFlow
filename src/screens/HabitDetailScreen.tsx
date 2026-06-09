@@ -16,7 +16,8 @@ import { useHabitStore } from '../store/habitStore';
 import { useTrackingStore } from '../store/trackingStore';
 import { useStreak } from '../hooks/useStreak';
 import { useHeatmapData } from '../hooks/useCompletionRate';
-import { today } from '../utils/dateHelpers';
+import { today, getLastNDays } from '../utils/dateHelpers';
+import * as Haptics from 'expo-haptics';
 import { loadContent, HABIT_CONTENT_KEY } from '../utils/contentLoader';
 import { ColorTheme, spacing, radius, typography, shadow } from '../utils/theme';
 import { useTheme } from '../utils/ThemeContext';
@@ -37,6 +38,13 @@ export default function HabitDetailScreen() {
   const toggle = useTrackingStore((s) => s.toggle);
   const streak = useStreak(habitId);
   const heatmap = useHeatmapData(habitId, 28);
+  const heatmapDates = getLastNDays(28);
+
+  const handleHeatmapCellPress = (index: number) => {
+    if (!habit) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    toggle(habit.id, heatmapDates[index]);
+  };
 
   const [content, setContent] = useState('');
   const [contentLoading, setContentLoading] = useState(true);
@@ -99,8 +107,19 @@ export default function HabitDetailScreen() {
             </View>
           </View>
           <Text style={styles.heatmapLabel}>Last 28 days</Text>
-          <HeatmapGrid data={heatmap} color={habit.color} />
+          <HeatmapGrid data={heatmap} color={habit.color} onCellPress={handleHeatmapCellPress} />
+          <Text style={styles.heatmapHint}>Tap a day to toggle</Text>
         </View>
+
+        {/* Complete today button */}
+        <TouchableOpacity
+          style={[styles.completeBtn, done && { backgroundColor: habit.color }]}
+          onPress={() => toggle(habit.id, today())}
+        >
+          <Text style={[styles.completeBtnText, done && styles.completeBtnTextDone]}>
+            {done ? '✓ Done today' : 'Mark as done today'}
+          </Text>
+        </TouchableOpacity>
 
         {/* Description */}
         {(contentLoading || content.length > 0) && (
@@ -113,16 +132,6 @@ export default function HabitDetailScreen() {
             )}
           </View>
         )}
-
-        {/* Complete today button */}
-        <TouchableOpacity
-          style={[styles.completeBtn, done && { backgroundColor: habit.color }]}
-          onPress={() => toggle(habit.id, today())}
-        >
-          <Text style={[styles.completeBtnText, done && styles.completeBtnTextDone]}>
-            {done ? '✓ Done today' : 'Mark as done today'}
-          </Text>
-        </TouchableOpacity>
 
       </ScrollView>
     </SafeAreaView>
@@ -208,6 +217,13 @@ const makeStyles = (colors: ColorTheme) => StyleSheet.create({
     ...typography.label,
     color: colors.textSecondary,
     marginBottom: spacing.sm,
+  },
+  heatmapHint: {
+    ...typography.label,
+    color: colors.textSecondary,
+    opacity: 0.6,
+    marginTop: spacing.xs,
+    textAlign: 'right',
   },
   descCard: {
     backgroundColor: colors.surface,
